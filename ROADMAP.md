@@ -24,8 +24,14 @@ What the design must protect. Everything else gets ordinary good design.
 - **The brand is a placeholder:** a paw holding a window down, in `docs/brand/`. The real logo is an M0 item.
 - **The tray app loads Avalonia's Fluent theme** even with no window, because Windows' tray menu is drawn with Avalonia controls. Without it the menu opened empty and Quit couldn't be clicked. This gives up 6.5 MB of exe size (10.2 to 16.7 MB).
 - **Three verdicts: Yours, Steal and Unclear.** Unclear is a switch right after a click in the window you were in, which may be a link or file you opened. The log counts those, so M2 can settle them with data. This gives up a simple two-way log.
-- **Also yours:** an app whose process started after your last click or deliberate key and took focus within 10 s, a click on the taskbar, Start, search or a notification, and an Alt or Win key within 1.5 s. This gives up catching an app that steals right after you press Alt, which FFXIV's Alt hotbars make common (M2).
+- **Also yours:** an app whose process started after your last click or deliberate key and took focus within 10 s, a click on the taskbar, Start, search or a notification, and an Alt or Win key within 1.5 s. This gives up catching an app that steals right after you press Alt, which FFXIV's Alt hotbars make common (M2). *Superseded 2026-10-21 for Alt: only Alt+Tab and Alt+Esc count now (below).*
 - **The watcher keeps NoFocusSteal's 15 ms foreground poll,** because some apps take focus without Windows announcing it. It's most of Staypaw's idle CPU (0.4% of one core).
+- **M2 was built without log data,** at the owner's call. The two open questions were decided up front instead of from Unclear rows and game sessions. This gives up evidence for both answers.
+- **A link or file you open is allowed:** an Unclear change goes through unless that app stole in the last 10 minutes, as in NoFocusSteal. This gives up catching a first-time stealer that lands right after your click.
+- **Only Alt+Tab, Alt+Esc and the Win key are switch keys.** Alt with any other key, like FFXIV's Alt+number hotbars or Alt+F in menus, no longer lets a change through. The switch counts when Alt is released, as Windows does it. This gives up other Alt shortcuts that open a window from another app.
+- **Staypaw restores focus after a steal from the protected app, or from any window you typed in during the last 1.5 s.** An idle steal from an unprotected app is only logged. This gives up NoFocusSteal's Strict mode, which blocks every unasked change everywhere.
+- **One protected app, picked as "the app you were just in"** from the tray. Clicking the tray never changes that app, so the menu needs no window list. It's saved to `%APPDATA%\Staypaw\protected-app.txt`. This gives up protecting several apps at once.
+- **One copy at a time,** through a named mutex. A second launch exits silently.
 
 ## M0: Placeholder (as soon as possible)
 
@@ -55,15 +61,17 @@ What the design must protect. Everything else gets ordinary good design.
 
 ## M2: Protect
 
-- [ ] Run one copy at a time, since two would fight over every restore.
-- [ ] Pick a protected app from the tray.
-- [ ] Undo a focus change away from the protected app, or from the window you're typing in, unless you made the switch.
-- [ ] Decide how a link or file your click opens in another app gets focus, using the log's Unclear rows.
-- [ ] Narrow the Alt and Win allowance, since FFXIV's hotbars use Alt with the number keys.
-- [ ] Put focus back and flash the stealer's taskbar button.
-- [ ] Show the last stealer and the top offender in the tray menu, and open the log from there.
+- [x] Run one copy at a time, since two would fight over every restore.
+- [x] Pick a protected app from the tray.
+- [x] Undo a focus change away from the protected app, or from the window you're typing in, unless you made the switch.
+- [x] Decide how a link or file your click opens in another app gets focus. Decided without log data (see Decisions).
+- [x] Narrow the Alt and Win allowance, since FFXIV's hotbars use Alt with the number keys.
+- [x] Put focus back and flash the stealer's taskbar button.
+- [x] Show the last stealer and the top stealer in the tray menu, and open the log from there.
 
 **Done when:** a scripted steal against a protected window is undone, a switch to the window you clicked is allowed, and tests cover both, plus a steal right after a keypress.
+
+**Done 2026-10-21:** `StealTests` restored a scripted steal from the protected app on the real desktop: a `Restored` row, with the original window back in front. `ClassifierTests` covers the clicked switch, the steal right after a keypress, links and repeat stealers. `InputTrackerTests` covers the switch keys. In the native build, a second copy exited on its own, and Protect, Stop protecting and Quit worked from the tray menu.
 
 ## M3: Hold stray keys
 

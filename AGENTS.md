@@ -42,7 +42,8 @@ One meaning per term. Use these words in code, docs and commits.
 - **Stealer:** the app whose window took focus.
 - **Your switch:** a focus change to the window you clicked, Alt+Tabbed to, or opened from the taskbar or Start.
 - **Protected app:** the app you picked. Nothing takes focus from it unless you switch away yourself.
-- **Restore:** putting focus back on the window a steal took it from.
+- **Restore:** putting focus back on the window a steal took it from. The log's Result column says `Restored`.
+- **Repeat stealer:** an app (exe plus window class) that stole in the last 10 minutes.
 - **Held keys:** keys typed between a steal and its restore.
 
 ## Commands
