@@ -29,12 +29,12 @@ What the design must protect. Everything else gets ordinary good design.
 - [x] Add the placeholder mark to `docs/brand/`.
 - [ ] Search trademarks for Staypaw: USPTO, and EUIPO if it will be sold in Europe. *(owner)*
 - [ ] Pick the real logo in a claude.ai design project. Export `mark.svg` and `lockup.svg` with `-dark` variants, with the wordmark converted to paths. *(owner)*
-- [ ] Scaffold `Staypaw.Core`, `Staypaw.Desktop` and `Staypaw.Tests` on .NET 10 and Avalonia 12, with central package versions and warnings as errors.
-- [ ] A tray icon made from the mark, with Quit. No window yet.
-- [ ] Design tokens: a spacing scale, a type scale, a palette with shades and a few shadow levels.
-- [ ] NativeAOT publish for `win-x64` with no trim or AOT warnings.
-- [ ] Guardrail tests, each with a positive control: `Staypaw.Core` doesn't reference Avalonia, and no Staypaw assembly uses `System.Net`.
-- [ ] CI on Windows: build, test, and secret scanning with the gitleaks release binary, checked against its published checksum and run with `--log-opts="--full-history HEAD"`.
+- [x] Scaffold `Staypaw.Core`, `Staypaw.Desktop` and `Staypaw.Tests` on .NET 10 and Avalonia 12, with central package versions and warnings as errors.
+- [x] A tray icon made from the mark, with Quit. No window yet.
+- [x] Design tokens: a spacing scale, a type scale, a palette with shades and a few shadow levels.
+- [x] NativeAOT publish for `win-x64` with no trim or AOT warnings.
+- [x] Guardrail tests, each with a positive control: `Staypaw.Core` doesn't reference Avalonia, and no Staypaw assembly uses `System.Net`. A deliberate `HttpClient` in Core failed the network test.
+- [x] CI on Windows: build, test, and secret scanning with the gitleaks release binary, checked against its published checksum and run with `--log-opts="--full-history HEAD"`.
 
 **Done when:** CI is green on `main`, and `dotnet publish -r win-x64` gives a native exe that starts in the tray.
 
@@ -49,6 +49,7 @@ What the design must protect. Everything else gets ordinary good design.
 
 ## M2: Protect
 
+- [ ] Run one copy at a time, since two would fight over every restore.
 - [ ] Pick a protected app from the tray.
 - [ ] Undo a focus change away from the protected app, or from the window you're typing in, unless you made the switch.
 - [ ] Decide how a link or file your click opens in another app gets focus.
