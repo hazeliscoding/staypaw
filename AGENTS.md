@@ -38,6 +38,7 @@ Staypaw watches the keyboard. People run it only if they can trust it, so never 
 One meaning per term. Use these words in code, docs and commits.
 
 - **Steal:** a focus change you didn't make.
+- **Unclear:** a focus change right after a click in the window you were in. It may be a link or file you opened, or a steal.
 - **Stealer:** the app whose window took focus.
 - **Your switch:** a focus change to the window you clicked, Alt+Tabbed to, or opened from the taskbar or Start.
 - **Protected app:** the app you picked. Nothing takes focus from it unless you switch away yourself.
@@ -47,6 +48,8 @@ One meaning per term. Use these words in code, docs and commits.
 ## Commands
 
 - `dotnet build` builds everything. `dotnet test` runs the tests.
+- `tests/Staypaw.Tests/bin/Release/net10.0-windows/Staypaw.Tests.exe -explicit only` runs the explicit tests, which steal focus on the real desktop. Run them only when the owner isn't typing.
+- `tools/Staypaw.StealTest` takes focus the way misbehaving apps do: `Staypaw.StealTest.exe <delaySeconds> [alt|attach|both] [repeatMs]`. It prints how many keys reached it.
 - `dotnet publish src/Staypaw.Desktop -c Release -r win-x64` builds the native exe. With Visual Studio 18, put `%ProgramFiles(x86)%\Microsoft Visual Studio\Installer` on `PATH` first: its `VsDevCmd.bat` calls `vswhere.exe` without a path, and the error text breaks the NativeAOT link step ("'vswhere.exe' is not recognized").
 - `dotnet run scripts/make-icons.cs` regenerates `docs/brand/staypaw.ico` and `app-icon-256.png` from `app-icon.svg`.
 

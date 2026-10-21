@@ -22,6 +22,10 @@ What the design must protect. Everything else gets ordinary good design.
 - **No network code, so no in-app updater.** Updates come through winget and GitHub Releases. This gives up Gil Sweep's update-and-restart.
 - **Never touch a game's process:** no injection, no memory reads and no input sent to it. Held keys aimed at a game are dropped, never replayed, because replayed keys are fake input. This keeps game terms of service and anti-cheat out of play, and gives up delivering keys typed into a game during a steal.
 - **The brand is a placeholder:** a paw holding a window down, in `docs/brand/`. The real logo is an M0 item.
+- **The tray app loads Avalonia's Fluent theme** even with no window, because Windows' tray menu is drawn with Avalonia controls. Without it the menu opened empty and Quit couldn't be clicked. This gives up 6.5 MB of exe size (10.2 to 16.7 MB).
+- **Three verdicts: Yours, Steal and Unclear.** Unclear is a switch right after a click in the window you were in, which may be a link or file you opened. The log counts those, so M2 can settle them with data. This gives up a simple two-way log.
+- **Also yours:** an app whose process started after your last click or deliberate key and took focus within 10 s, a click on the taskbar, Start, search or a notification, and an Alt or Win key within 1.5 s. This gives up catching an app that steals right after you press Alt, which FFXIV's Alt hotbars make common (M2).
+- **The watcher keeps NoFocusSteal's 15 ms foreground poll,** because some apps take focus without Windows announcing it. It's most of Staypaw's idle CPU (0.4% of one core).
 
 ## M0: Placeholder (as soon as possible)
 
@@ -40,19 +44,22 @@ What the design must protect. Everything else gets ordinary good design.
 
 ## M1: Watch and log
 
-- [ ] Port the watcher from NoFocusSteal `279e9cd` into `Staypaw.Core`, with its MIT notice in `THIRD-PARTY-NOTICES.md`.
-- [ ] Log every focus change to `%LOCALAPPDATA%\Staypaw\focus-log.csv` with NoFocusSteal's columns, so logs from both tools can be compared.
-- [ ] Port NoFocusSteal's steal test as a dev tool: a window that grabs focus on a timer and counts the keys it receives.
-- [ ] Measure idle CPU and working set, and record them here.
+- [x] Port the watcher from NoFocusSteal `279e9cd` into `Staypaw.Core`, with its MIT notice in `THIRD-PARTY-NOTICES.md`.
+- [x] Log every focus change to `%LOCALAPPDATA%\Staypaw\focus-log.csv` with NoFocusSteal's columns, so logs from both tools can be compared.
+- [x] Port NoFocusSteal's steal test as a dev tool: a window that grabs focus on a timer and counts the keys it receives.
+- [x] Measure idle CPU and working set, and record them here. The native build, idle for 60 s on 2026-10-21: 234 ms of CPU (0.4% of one core), a 41 MB working set and 66 MB private.
 
 **Done when:** a scripted steal shows up as a log row, the classification is covered by tests, and the idle numbers are recorded.
+
+**Done 2026-10-21:** the native build logged the steal tool as `Steal` ("no click or switch asked for it"), and `StealTests` passes against the real desktop (`Staypaw.Tests.exe -explicit only`). `ClassifierTests` covers each rule.
 
 ## M2: Protect
 
 - [ ] Run one copy at a time, since two would fight over every restore.
 - [ ] Pick a protected app from the tray.
 - [ ] Undo a focus change away from the protected app, or from the window you're typing in, unless you made the switch.
-- [ ] Decide how a link or file your click opens in another app gets focus.
+- [ ] Decide how a link or file your click opens in another app gets focus, using the log's Unclear rows.
+- [ ] Narrow the Alt and Win allowance, since FFXIV's hotbars use Alt with the number keys.
 - [ ] Put focus back and flash the stealer's taskbar button.
 - [ ] Show the last stealer and the top offender in the tray menu, and open the log from there.
 
