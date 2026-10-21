@@ -17,13 +17,8 @@
 
   <TrayIcon.Icons>
     <TrayIcons>
-      <TrayIcon Icon="avares://Staypaw/Assets/staypaw.ico" ToolTipText="Staypaw">
-        <TrayIcon.Menu>
-          <NativeMenu>
-            <NativeMenuItem Header="Quit Staypaw" Click="OnQuit" />
-          </NativeMenu>
-        </TrayIcon.Menu>
-      </TrayIcon>
+      <!-- The menu is built in App.axaml.cs, because it shows what the watcher knows. -->
+      <TrayIcon Icon="avares://Staypaw/Assets/staypaw.ico" ToolTipText="Staypaw" />
     </TrayIcons>
   </TrayIcon.Icons>
 </Application>
