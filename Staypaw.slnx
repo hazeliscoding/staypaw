@@ -3,4 +3,7 @@
     <Project Path="src/Staypaw.Core/Staypaw.Core.csproj" />
     <Project Path="src/Staypaw.Desktop/Staypaw.Desktop.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Staypaw.Tests/Staypaw.Tests.csproj" />
+  </Folder>
 </Solution>
