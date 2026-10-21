@@ -74,6 +74,21 @@ public static class Classifier
     public const int TypingWindowMs = 1500;
     public const int LaunchGraceMs = 10000;
 
+    // An app that stole this recently loses the benefit of the doubt after your clicks.
+    public const int RepeatStealerMs = 10 * 60 * 1000;
+
+    /// <summary>
+    /// Whether to put focus back. A steal is undone when it took focus from the protected app or from the window
+    /// you were typing in. An Unclear change, usually a link or file you opened, is undone only for a repeat stealer.
+    /// </summary>
+    public static bool ShouldRestore(Classification classification, FocusChange c, bool previousIsProtected, bool nextIsRepeatStealer) =>
+        classification.Verdict switch
+        {
+            Verdict.Steal => previousIsProtected || Within(c, c.LastTyping, TypingWindowMs),
+            Verdict.Unclear => nextIsRepeatStealer,
+            _ => false,
+        };
+
     public static Classification Classify(FocusChange c)
     {
         if (c.NextIsOwnProcess)

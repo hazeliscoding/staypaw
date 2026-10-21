@@ -97,5 +97,37 @@ public class ClassifierTests
         Assert.Equal(Verdict.Yours, VerdictOf(change));
     }
 
+    [Fact]
+    public void A_steal_from_the_protected_app_is_restored_even_while_you_are_idle() =>
+        Assert.True(Restores(Baseline, previousIsProtected: true));
+
+    [Fact]
+    public void A_steal_while_you_type_is_restored_in_any_app() =>
+        Assert.True(Restores(Baseline with { LastTyping = Now - 300 }));
+
+    // You type a line, press Enter, and a popup lands 100 ms later.
+    [Fact]
+    public void A_steal_right_after_a_keypress_is_restored() =>
+        Assert.True(Restores(Baseline with { LastTyping = Now - 400, LastAction = Now - 100 }));
+
+    [Fact]
+    public void An_idle_steal_from_an_unprotected_app_is_only_logged() =>
+        Assert.False(Restores(Baseline));
+
+    [Fact]
+    public void A_switch_to_the_window_you_clicked_is_never_restored() =>
+        Assert.False(Restores(Baseline with { LastClickOnNext = Now - 5, LastTyping = Now - 300 }, previousIsProtected: true));
+
+    [Fact]
+    public void A_link_you_opened_is_allowed() =>
+        Assert.False(Restores(Baseline with { LastClickInPrevious = Now - 300 }, previousIsProtected: true));
+
+    [Fact]
+    public void A_repeat_stealer_is_restored_even_right_after_your_click() =>
+        Assert.True(Restores(Baseline with { LastClickInPrevious = Now - 300 }, nextIsRepeatStealer: true));
+
     private static Verdict VerdictOf(FocusChange change) => Classifier.Classify(change).Verdict;
+
+    private static bool Restores(FocusChange change, bool previousIsProtected = false, bool nextIsRepeatStealer = false) =>
+        Classifier.ShouldRestore(Classifier.Classify(change), change, previousIsProtected, nextIsRepeatStealer);
 }

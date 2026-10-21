@@ -5,7 +5,7 @@ namespace Staypaw.Core;
 // Ported from NoFocusSteal's FocusLog.cs at 279e9cd (MIT); see THIRD-PARTY-NOTICES.md. The columns are kept,
 // so logs from both tools can be compared; the Result column holds Staypaw's verdicts.
 
-internal sealed record LogEntry(DateTime Time, Classification Classification, WindowInfo Window, WindowInfo? Previous, string Note = "");
+internal sealed record LogEntry(DateTime Time, Classification Classification, WindowInfo Window, WindowInfo? Previous, string Note = "", bool Restored = false);
 
 /// <summary>Appends every focus change to a CSV file. Window titles are stored; keys never are.</summary>
 internal sealed class FocusLog(string path)
@@ -35,7 +35,7 @@ internal sealed class FocusLog(string path)
 
             w.WriteLine(string.Join(",",
                 e.Time.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                e.Classification.Verdict,
+                e.Restored ? "Restored" : e.Classification.Verdict.ToString(),
                 Csv(e.Window.ExeName),
                 e.Window.ProcessId,
                 Csv(e.Window.ExePath),
