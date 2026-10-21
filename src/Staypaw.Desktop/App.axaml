@@ -10,6 +10,11 @@
     </ResourceDictionary>
   </Application.Resources>
 
+  <!-- The Windows tray menu is drawn with Avalonia controls, so it needs a theme even with no window. -->
+  <Application.Styles>
+    <FluentTheme />
+  </Application.Styles>
+
   <TrayIcon.Icons>
     <TrayIcons>
       <TrayIcon Icon="avares://Staypaw/Assets/staypaw.ico" ToolTipText="Staypaw">
