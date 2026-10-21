@@ -5,8 +5,9 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Staypaw.Core;
 
-// Ported from NoFocusSteal's InputTracker.cs at 279e9cd (MIT); see THIRD-PARTY-NOTICES.md. Changed: Alt and Win
-// are kept apart from other deliberate keys, and a click remembers whether it landed on Windows' own UI.
+// Ported from NoFocusSteal's InputTracker.cs at 279e9cd (MIT); see THIRD-PARTY-NOTICES.md. Changed: switch keys
+// (Alt+Tab, Alt+Esc and Win) are kept apart from other deliberate keys, and a click remembers whether it landed on
+// Windows' own UI.
 
 /// <summary>
 /// Watches keyboard and mouse through Raw Input (no hooks, nothing injected into other processes) and keeps short
@@ -35,7 +36,7 @@ internal sealed class InputTracker : IDisposable
     private readonly Ring _any = new(64);
     private int _lastAny;
     private int _lastMoveRecorded;
-    private bool _ctrl, _alt, _win;
+    private bool _ctrl, _alt, _win, _altSwitched;
 
     public unsafe InputTracker()
     {
@@ -180,7 +181,7 @@ internal sealed class InputTracker : IDisposable
         }
     }
 
-    private void OnKey(ushort vk, bool down, int time)
+    internal void OnKey(ushort vk, bool down, int time)
     {
         switch (vk)
         {
@@ -191,9 +192,14 @@ internal sealed class InputTracker : IDisposable
                 _ctrl = down;
                 return;
             case 0x12:
+                // Alt+Tab switches when Alt is released. Alt with other keys (game hotbars, menus) isn't a switch.
+                if (!down && _altSwitched)
+                {
+                    _switchKeys.Push(time);
+                }
+
                 _alt = down;
-                // Alt+Tab switches when Alt is released, so both edges count.
-                _switchKeys.Push(time);
+                _altSwitched = false;
                 return;
             case 0x5B:
             case 0x5C:
@@ -205,6 +211,13 @@ internal sealed class InputTracker : IDisposable
         if (!down)
         {
             return;
+        }
+
+        // Checked before the stuck-modifier fix below: a wrongly counted switch only lets a change through.
+        if (_alt && vk is 0x09 or 0x1B)
+        {
+            _switchKeys.Push(time);
+            _altSwitched = true;
         }
 
         // A key-up can go missing (for example while a UAC prompt had the secure desktop), which would leave a
