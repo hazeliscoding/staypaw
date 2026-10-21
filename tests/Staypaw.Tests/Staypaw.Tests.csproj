@@ -4,11 +4,14 @@
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
     <RootNamespace>Staypaw.Tests</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Staypaw.Core\Staypaw.Core.csproj" />
     <ProjectReference Include="..\..\src\Staypaw.Desktop\Staypaw.Desktop.csproj" />
+    <!-- Built first so StealTests can run it; nothing references its code. -->
+    <ProjectReference Include="..\..\tools\Staypaw.StealTest\Staypaw.StealTest.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

@@ -2,12 +2,13 @@
 
 ## NoFocusSteal
 
-Staypaw's watcher is ported from [NoFocusSteal](https://github.com/BoazCohenJ/NoFocusSteal) at commit `279e9cd`:
+Staypaw's watcher and its steal test are ported from [NoFocusSteal](https://github.com/BoazCohenJ/NoFocusSteal) at commit `279e9cd`:
 
 - `src/Staypaw.Core/FocusWatcher.cs`, from `FocusMonitor.cs`
 - `src/Staypaw.Core/InputTracker.cs`
 - `src/Staypaw.Core/WindowInfo.cs`
 - `src/Staypaw.Core/FocusLog.cs`
+- `tools/Staypaw.StealTest/Program.cs`, from `StealTest.cs`
 
 Each file says what changed. NoFocusSteal is under the MIT License:
 

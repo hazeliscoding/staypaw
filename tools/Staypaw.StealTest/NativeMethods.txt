@@ -1,0 +1,7 @@
+AttachThreadInput
+BringWindowToTop
+GetCurrentThreadId
+GetForegroundWindow
+GetWindowThreadProcessId
+keybd_event
+SetForegroundWindow
