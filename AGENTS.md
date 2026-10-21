@@ -1,0 +1,61 @@
+# AGENTS.md
+
+These are the working rules for agents in this repo. Staypaw is a Windows tray app (.NET 10, Avalonia 12, NativeAOT, Apache-2.0) that stops other apps from taking your keyboard focus.
+
+## Sources of truth
+
+- `README.md`: the pitch and the trust contract.
+- `ROADMAP.md`: decisions already made, the milestones, and what is out of scope. Check it before proposing features. Respect those decisions unless the owner reopens them.
+- Work from the next unchecked item in `ROADMAP.md`. Don't build past the current milestone without asking.
+
+## The trust contract (hard rules)
+
+Staypaw watches the keyboard. People run it only if they can trust it, so never break these, not even in dev tooling that ships.
+
+- **No code in other processes.** No DLL injection, no `CreateRemoteThread`, no hook DLLs loaded into other apps. Use only out-of-context WinEvent hooks, Raw Input and low-level hooks (`WH_KEYBOARD_LL`, `WH_MOUSE_LL`), which all run in Staypaw's own process. Work laptops ban injection, and anti-cheat flags it.
+- **Never touch a game's process.** Identify a window's app with `PROCESS_QUERY_LIMITED_INFORMATION` and nothing more: no memory reads and no input sent to it. Held keys aimed at a game are dropped, never replayed. Game terms of service forbid tools that read or drive the client, and replayed keys are fake input.
+- **No networking code.** No `HttpClient`, sockets, updater or telemetry, and no package that brings them in. A test fails on any `System.Net` use in Staypaw's assemblies. A keyboard watcher that talks to the network can't be trusted.
+- **Never record which key was pressed.** The log and memory keep only the time of a keypress. The one exception is held keys (M3): kept in memory until they're delivered or dropped, and never written anywhere. Anything more makes Staypaw a keylogger.
+- **Run unelevated.** Don't set `requireAdministrator` in the manifest. An elevated mode is a Later item with its own decision.
+- **Code ported from NoFocusSteal keeps its MIT notice** in `THIRD-PARTY-NOTICES.md`. The license requires it.
+
+## Code
+
+- .NET 10 with nullable on and warnings as errors. Package versions live in `Directory.Packages.props`.
+- `Staypaw.Core` holds the watcher and the rules and never references Avalonia; a test enforces it. Rules take the event and the time as inputs and call no Win32, so tests run without real windows.
+- Win32 calls go through CsWin32 (`NativeMethods.txt`), not hand-written `DllImport`. The generated code is typed and NativeAOT-safe.
+- NativeAOT must stay free of warnings: no reflection-based serialization. Use source generators.
+
+## Dependencies
+
+- **A special-purpose library** (a parser, an installer framework): add it yourself, with its reason in the commit message.
+- **A general-purpose helper:** only after checking that nothing in the project already does the job.
+- **A framework:** never without asking the owner.
+- **Anything that brings in network code:** never. See the trust contract.
+
+## Glossary
+
+One meaning per term. Use these words in code, docs and commits.
+
+- **Steal:** a focus change you didn't make.
+- **Stealer:** the app whose window took focus.
+- **Your switch:** a focus change to the window you clicked, Alt+Tabbed to, or opened from the taskbar or Start.
+- **Protected app:** the app you picked. Nothing takes focus from it unless you switch away yourself.
+- **Restore:** putting focus back on the window a steal took it from.
+- **Held keys:** keys typed between a steal and its restore.
+
+## Commands
+
+- `dotnet build` builds everything. `dotnet test` runs the tests.
+- `dotnet publish src/Staypaw.Desktop -c Release -r win-x64` builds the native exe.
+
+## Working style
+
+- **Commits:** [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `ci:`, `build:`, `refactor:`). Keep each commit atomic, and use a scope when it adds clarity (`feat(rules): …`).
+- **No AI attribution** in commits or PRs. That means no `Co-Authored-By` trailers, no "Generated with" lines and no session links.
+- **Checks:** automate acceptance checks instead of handing manual steps to the owner. Give every check that tests for an absence a positive control. For example, the network guard must fail on a deliberate `HttpClient`.
+- **Structural rules get tests.** When a decision is a rule about the code's shape, add a test that fails when it's broken.
+- **Validation:** evidence comes from dogfooding and public signals (issues, downloads). Don't plan interviews, recruiting or outreach.
+- **Docs:** short and concise. Prefer editing `ROADMAP.md` over creating new planning documents.
+- **Code comments:** explain why, not what. Comment only what the code can't say for itself: a non-obvious constraint, a Win32 quirk and its cause, or a line that keeps the trust contract. Don't restate names or types, and don't leave commented-out code.
+- Local Playwright output goes to `.playwright-mcp/`, which git ignores.
