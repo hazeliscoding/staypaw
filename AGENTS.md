@@ -47,7 +47,8 @@ One meaning per term. Use these words in code, docs and commits.
 ## Commands
 
 - `dotnet build` builds everything. `dotnet test` runs the tests.
-- `dotnet publish src/Staypaw.Desktop -c Release -r win-x64` builds the native exe.
+- `dotnet publish src/Staypaw.Desktop -c Release -r win-x64` builds the native exe. With Visual Studio 18, put `%ProgramFiles(x86)%\Microsoft Visual Studio\Installer` on `PATH` first: its `VsDevCmd.bat` calls `vswhere.exe` without a path, and the error text breaks the NativeAOT link step ("'vswhere.exe' is not recognized").
+- `dotnet run scripts/make-icons.cs` regenerates `docs/brand/staypaw.ico` and `app-icon-256.png` from `app-icon.svg`.
 
 ## Working style
 
