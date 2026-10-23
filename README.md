@@ -1,9 +1,8 @@
-<h1>
+<h1 align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/mark-dark.svg">
-    <img alt="" src="docs/brand/mark.svg" height="40" align="center">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-dark.svg">
+    <img alt="Staypaw" src="docs/brand/lockup.svg" height="48">
   </picture>
-  Staypaw
 </h1>
 
 **Nothing takes your keyboard.** While you type or play, Staypaw puts focus back where it belongs.

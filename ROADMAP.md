@@ -33,12 +33,17 @@ What the design must protect. Everything else gets ordinary good design.
 - **One protected app, picked as "the app you were just in"** from the tray. Clicking the tray never changes that app, so the menu needs no window list. It's saved to `%APPDATA%\Staypaw\protected-app.txt`. This gives up protecting several apps at once.
 - **One copy at a time,** through a named mutex. A second launch exits silently.
 
+## Decisions (2026-10-23)
+
+- **The wordmark is Fredoka SemiBold,** lowercase and outlined, beside the mark in `lockup.svg` and `lockup-dark.svg`, as in Sweepling. The README's title is the lockup. `scripts/make_lockup.py` builds both from the mark, so they follow it when the real logo arrives. This gives up a typeface of Staypaw's own: it shares Sweepling's.
+
 ## M0: Placeholder (as soon as possible)
 
 - [x] Add `LICENSE` (Apache-2.0), `README.md`, `ROADMAP.md` and `AGENTS.md`.
 - [x] Add the placeholder mark to `docs/brand/`.
 - [ ] Search trademarks for Staypaw: USPTO, and EUIPO if it will be sold in Europe. *(owner)*
-- [ ] Pick the real logo in a claude.ai design project. Export `mark.svg` and `lockup.svg` with `-dark` variants, with the wordmark converted to paths. *(owner)*
+- [ ] Pick the real logo in a claude.ai design project, and export `mark.svg` with a `-dark` variant. `scripts/make_lockup.py` rebuilds the lockups from it. *(owner)*
+- [x] Lockups of the placeholder mark with the wordmark, for light and dark backgrounds.
 - [x] Scaffold `Staypaw.Core`, `Staypaw.Desktop` and `Staypaw.Tests` on .NET 10 and Avalonia 12, with central package versions and warnings as errors.
 - [x] A tray icon made from the mark, with Quit. No window yet.
 - [x] Design tokens: a spacing scale, a type scale, a palette with shades and a few shadow levels.
