@@ -11,7 +11,7 @@ Windows lets apps pull focus to themselves: a chat popup, an installer, a browse
 
 <img align="right" width="150" src="docs/brand/calla/slow-blink.png" alt="Calla, a calico cat-eared homebody with warm white hair, slow-blinks with her arms folded, as Staypaw does when all is quiet.">
 
-> **Status:** planning. There is nothing to install yet. See [ROADMAP.md](ROADMAP.md). Until Staypaw ships, use one of the tools under [Alternatives](#alternatives).
+> **Status:** in development. Staypaw already logs every steal and protects the app you pick, but there's no release to install yet. See [ROADMAP.md](ROADMAP.md). Until Staypaw ships, use one of the tools under [Alternatives](#alternatives).
 
 <br clear="right">
 
@@ -56,7 +56,7 @@ Checked against each project's own docs on 2026-10-21.
 | A key typed during a steal | held, never reaches the stealer | can land in the stealer (up to 1 in 185 keys in its own test) | none land | n/a |
 | Signed, on winget | planned | not signed, not on winget | not checked | signed |
 
-**Pick NoFocusSteal today:** it works, and Staypaw doesn't exist yet. **Pick the Windhawk mod** if you know which apps steal focus and don't mind injection: it stops a steal before any key lands, which a tool that reacts afterwards can't promise. **Pick FocusLogger** if you only want to know which app it is.
+**Pick NoFocusSteal today:** it works, and Staypaw has no release yet. **Pick the Windhawk mod** if you know which apps steal focus and don't mind injection: it stops a steal before any key lands, which a tool that reacts afterwards can't promise. **Pick FocusLogger** if you only want to know which app it is.
 
 ## Contributing
 
