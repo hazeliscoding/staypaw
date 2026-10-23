@@ -36,6 +36,7 @@ What the design must protect. Everything else gets ordinary good design.
 ## Decisions (2026-10-23)
 
 - **The wordmark is Fredoka SemiBold,** lowercase and outlined, beside the mark in `lockup.svg` and `lockup-dark.svg`, as in Sweepling. The README's title is the lockup. `scripts/make_lockup.py` builds both from the mark, so they follow it when the real logo arrives. This gives up a typeface of Staypaw's own: it shares Sweepling's.
+- **Calla Keyes joins as Staypaw's character, beside the placeholder mark.** She is a calico homebody who sits beside your work like a cat on a warm keyboard and won't move unless you pick her up yourself. She appears in the README, in `docs/brand/calla/` and in launch posts. The paw mark stays the logo and the app icon. Her art was drawn with an AI image model, and it is Apache-2.0 like the code; the README says both. Her stay-put sticker stays out of the README until its see-through gaps are filled, because they show on GitHub's dark mode. This gives up a single mark, and the sticker that shows a steal being undone.
 
 ## M0: Placeholder (as soon as possible)
 
@@ -101,6 +102,9 @@ What the design must protect. Everything else gets ordinary good design.
 - A pause hotkey and a timed pause.
 - Rules by launcher: windows started by a coding agent or a Playwright server never get focus. Today's tools can only match by exe name, so an agent's Chromium and your own Chrome look the same.
 - An elevated mode that can protect admin apps.
+- Calla's stay-put sticker beside "Before and after", once its see-through gaps are filled in anime-pipeline.
+- Calla's keys-held and on-guard stickers and her night-watch outfit, drawn in anime-pipeline. On-guard would be the README hero.
+- Calla inside the app, after measuring what she adds to the exe size and idle memory.
 
 ## Not planned
 

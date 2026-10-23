@@ -9,7 +9,11 @@
 
 Windows lets apps pull focus to themselves: a chat popup, an installer, a browser an agent is driving. Your next keypress lands in the wrong window, sometimes on its default button. Space has cancelled a Visual Studio install, and Esc has killed a Bluetooth transfer. [PowerToys #65](https://github.com/microsoft/PowerToys/issues/65) has asked for a fix since 2019.
 
+<img align="right" width="150" src="docs/brand/calla/slow-blink.png" alt="Calla, a calico cat-eared homebody with warm white hair, slow-blinks with her arms folded, as Staypaw does when all is quiet.">
+
 > **Status:** planning. There is nothing to install yet. See [ROADMAP.md](ROADMAP.md). Until Staypaw ships, use one of the tools under [Alternatives](#alternatives).
+
+<br clear="right">
 
 ## Before and after
 
@@ -20,6 +24,8 @@ Windows lets apps pull focus to themselves: a chat popup, an installer, a browse
 | pressing Space | an installer with a Cancel button | the install is cancelled | the key never reaches the installer |
 
 ## What it does
+
+<img align="right" width="180" src="docs/brand/calla/that-one.png" alt="Calla holds a stray pop-up window out at arm's length and frowns at it, as Staypaw's log names the app that stole focus.">
 
 Planned for 1.0:
 
@@ -58,4 +64,4 @@ Issues are welcome. Planning lives in [ROADMAP.md](ROADMAP.md).
 
 ## License
 
-[Apache-2.0](LICENSE)
+[Apache-2.0](LICENSE). Calla, the cat-eared homebody in this README, was drawn with an AI image model and is Apache-2.0 like the code.

@@ -28,6 +28,7 @@ Staypaw watches the keyboard. People run it only if they can trust it, so never 
 
 ## Brand
 
+- The logo and the app icon are the paw mark. Calla, in `docs/brand/calla/`, is the character. Never edit, recolour or redraw her here: her stickers come from one written spec and one reference image, and a sticker changed by hand drifts from the rest of the set. Keep `stay-put.png` off dark backgrounds, GitHub's dark mode included, until its see-through gaps are filled, because they show as dark slivers.
 - The wordmark is outlined Fredoka SemiBold. Use the lockup SVGs; don't re-typeset it with a web font. `scripts/make_lockup.py` rebuilds them from the mark, so rerun it when the mark changes.
 
 ## Dependencies
