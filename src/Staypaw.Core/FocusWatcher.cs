@@ -56,6 +56,7 @@ public sealed class FocusWatcher : IDisposable
     private nuint _pollTimer;
     private KeyboardHook? _keyboard;
     private HWND _lastSeenForeground;
+    private int _restoreRetryUntil;
 
     // The foreground window once the latest judgement, and any restore, finished. The keyboard hook's thread holds
     // keys typed while any other window has focus, including during the judging.
@@ -165,6 +166,14 @@ public sealed class FocusWatcher : IDisposable
     private void CheckForeground()
     {
         var foreground = PInvoke.GetForegroundWindow();
+
+        // A restore can leave no window in front, and then no event comes to retry it.
+        if (foreground.IsNull && _lastSeenForeground.IsNull && _tracked is not null && !WindowInfo.IsGone(_tracked.Hwnd)
+            && Classifier.Elapsed(_restoreRetryUntil, Environment.TickCount) > 0 && ForceForeground(_tracked.Hwnd))
+        {
+            foreground = _tracked.Hwnd;
+        }
+
         if (!foreground.IsNull && foreground != _lastSeenForeground)
         {
             _lastSeenForeground = foreground;
@@ -349,8 +358,10 @@ public sealed class FocusWatcher : IDisposable
             }
 
             // Often the switch just hasn't registered yet. Keep your window as the one you're in and look at the
-            // foreground again on the next check, which retries if the stealer is still there.
+            // foreground again on the next check, which retries if the stealer is still there, or if no window is,
+            // for as long as keys typed meanwhile are held.
             _lastSeenForeground = HWND.Null;
+            _restoreRetryUntil = unchecked(Environment.TickCount + KeyHolder.LimitMs);
         }
         else if (alreadyBack && stealer.IsBogus)
         {
@@ -388,12 +399,14 @@ public sealed class FocusWatcher : IDisposable
 
     private static unsafe bool ForceForeground(HWND target)
     {
+        // Sharing input state with the thread that owns the foreground lets us move it. With no window in front, a
+        // switch to another thread's window can stall for good though SetForegroundWindow says it worked, so share
+        // the target's instead and the switch happens at once. Not a hung one's, which would hang Staypaw too.
         var foreground = PInvoke.GetForegroundWindow();
-        var foregroundThread = foreground.IsNull ? 0 : PInvoke.GetWindowThreadProcessId(foreground);
+        var inputOwner = !foreground.IsNull ? foreground : PInvoke.IsHungAppWindow(target) ? HWND.Null : target;
+        var inputThread = inputOwner.IsNull ? 0 : PInvoke.GetWindowThreadProcessId(inputOwner);
         var me = PInvoke.GetCurrentThreadId();
-
-        // Sharing input state with the thread that owns the foreground lets us move it.
-        var attached = foregroundThread != 0 && foregroundThread != me && PInvoke.AttachThreadInput(me, foregroundThread, true);
+        var attached = inputThread != 0 && inputThread != me && PInvoke.AttachThreadInput(me, inputThread, true);
         try
         {
             // No BringWindowToTop as well: SetForegroundWindow raises the window anyway, and the extra activation
@@ -404,13 +417,14 @@ public sealed class FocusWatcher : IDisposable
         {
             if (attached)
             {
-                PInvoke.AttachThreadInput(me, foregroundThread, false);
+                PInvoke.AttachThreadInput(me, inputThread, false);
             }
         }
 
-        if (PInvoke.GetForegroundWindow() == target)
+        var front = PInvoke.GetForegroundWindow();
+        if (front == target || foreground.IsNull)
         {
-            return true;
+            return front == target;
         }
 
         // Fallback: Windows lets the process that produced the latest input set the foreground. Send a key no program

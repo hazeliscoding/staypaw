@@ -27,6 +27,7 @@ GetTokenInformation
 GetWindowText
 GetWindowThreadProcessId
 HWND_MESSAGE
+IsHungAppWindow
 IsIconic
 IsWindow
 IsWindowVisible
