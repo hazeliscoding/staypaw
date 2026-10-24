@@ -396,7 +396,8 @@ public sealed class FocusWatcher : IDisposable
         var attached = foregroundThread != 0 && foregroundThread != me && PInvoke.AttachThreadInput(me, foregroundThread, true);
         try
         {
-            PInvoke.BringWindowToTop(target);
+            // No BringWindowToTop as well: SetForegroundWindow raises the window anyway, and the extra activation
+            // could leave no window in front and lose the keys typed meanwhile.
             PInvoke.SetForegroundWindow(target);
         }
         finally
