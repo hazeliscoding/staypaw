@@ -9,7 +9,8 @@ using Timer = System.Windows.Forms.Timer;
 //
 // Usage: Staypaw.StealTest <delaySeconds> [alt|attach|both] [repeatMs]
 // Waits, then forces its window into the foreground with the tricks misbehaving apps use. With repeatMs it keeps
-// grabbing focus. It closes after 20 seconds, or when its window is closed, and prints how many keys reached it.
+// grabbing focus. It also steals whenever its thread gets WM_APP, so a test can pick the moment. It closes after
+// 20 seconds, or when its window is closed, and prints how many keys reached it.
 var delaySeconds = args.Length > 0 ? int.Parse(args[0], CultureInfo.InvariantCulture) : 3;
 var method = args.Length > 1 ? args[1] : "both";
 var repeatMs = args.Length > 2 ? int.Parse(args[2], CultureInfo.InvariantCulture) : 0;
@@ -38,6 +39,7 @@ form.KeyDown += (_, e) =>
     }
 };
 form.FormClosed += (_, _) => Application.Exit();
+Application.AddMessageFilter(new StealOnRequest(() => Steal((HWND)form.Handle, method)));
 
 var delay = new Timer { Interval = Math.Max(1, delaySeconds) * 1000 };
 delay.Tick += (_, _) =>
@@ -82,5 +84,21 @@ static void Steal(HWND hwnd, string method)
         {
             PInvoke.AttachThreadInput(me, foregroundThread, false);
         }
+    }
+}
+
+sealed class StealOnRequest(Action steal) : IMessageFilter
+{
+    private const int WmApp = 0x8000;
+
+    public bool PreFilterMessage(ref Message m)
+    {
+        if (m.HWnd != 0 || m.Msg != WmApp)
+        {
+            return false;
+        }
+
+        steal();
+        return true;
     }
 }
