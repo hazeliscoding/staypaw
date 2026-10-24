@@ -50,6 +50,15 @@ What the design must protect. Everything else gets ordinary good design.
 
   The tray menu costs as much as the window: the first thing Avalonia draws starts its renderer, which isn't released until Staypaw quits. The welcome pays at first launch what the first tray click pays anyway. This gives up M1's idle figure as the whole story: it holds only until the menu or the window first opens.
 
+## Decisions (2026-10-24)
+
+- **Held keys are replayed into your window, never into a game.** A window counts as a game when it's the protected app, an exe that Windows' Game Bar lists (read from the registry, so the game itself is never touched), or an app Staypaw can't name, since anti-cheat can hide even a process's name. Replayed keys are input the game didn't get from you. This gives up the keys typed in a steal's first milliseconds when the protected app isn't a game, and leaves a game that Windows doesn't list, and that you didn't protect, open to replayed keys.
+- **Keys wait until Staypaw has judged a focus change and finished any restore.** A `WH_KEYBOARD_LL` hook on a thread of its own catches them. Every key on the system waits for that hook, and Windows quietly removes one that answers too slowly, so it can't share the UI thread, which may be busy drawing. Keys held for a change that stands go to the new window only if it was your switch; otherwise they're dropped, never sent to a stealer. This gives up keys typed in the first milliseconds of a change Staypaw lets stand, such as a link you opened.
+- **A hold that makes no progress for 500 ms drops its keys and lets the keyboard go,** so a stuck watcher or a bug can't take the keyboard. This gives up those keys.
+- **A restore calls `SetForegroundWindow` alone, without NoFocusSteal's `BringWindowToTop`.** Its extra activation could leave no window in front: in a steal test that typed without pause, about 40 of 1,000 keys reached no window, and each steal logged two `Restored` rows and counted twice toward the fight limit. `SetForegroundWindow` raises the window anyway. This gives up NoFocusSteal's exact restore.
+- **A restore that leaves no window in front is finished from your window's thread.** After a steal, `SetForegroundWindow` can return true and still leave no window in front, for good: your keys go nowhere and the stealer can't even steal again. A plain retry never fixed it. While it lasts, for up to 500 ms, the 15 ms check retries with Staypaw's thread sharing the input of your window's thread (`AttachThreadInput`), which finished 17 of 17 such restores. It's the one time Staypaw shares a game's input state: for about a millisecond, with no process handle, no memory read and no input sent. A hung window is skipped, since it would hang Staypaw too. This gives up keeping Staypaw's input apart from a protected game's at all times.
+- **Keys already in your window when a stealer takes focus can't be held.** A stealer that joins your window's input with `AttachThreadInput` and then takes focus gets the keys your window hasn't read yet, or they're lost when it lets go. The hook let them through rightly, because your window had focus: tagged keys put each one 0–3 ms before the steal. So the key test goes quiet for 30 ms before each steal it asks for, and checks the keys typed after it. This gives up keys typed in the last milliseconds before a steal, and a test of them.
+
 ## M0: Placeholder (as soon as possible)
 
 - [x] Add `LICENSE` (Apache-2.0), `README.md`, `ROADMAP.md` and `AGENTS.md`.
@@ -93,11 +102,13 @@ What the design must protect. Everything else gets ordinary good design.
 
 ## M3: Hold stray keys
 
-- [ ] A `WH_KEYBOARD_LL` hook in Staypaw's own process that holds keys typed between a steal and the restore.
-- [ ] Deliver held keys to your window after the restore, and drop them when that window is a protected game.
-- [ ] Scan the published exe with Microsoft Defender, since a global keyboard hook can look like a keylogger.
+- [x] A `WH_KEYBOARD_LL` hook in Staypaw's own process that holds keys typed between a steal and the restore.
+- [x] Deliver held keys to your window after the restore, and drop them when that window is a protected game.
+- [x] Scan the published exe with Microsoft Defender, since a global keyboard hook can look like a keylogger.
 
 **Done when:** the steal test counts 0 keys reaching the stealer, and a Defender scan of the published exe is clean.
+
+**Done 2026-10-24:** `StealTests` passed three runs in a row on the real desktop. In each, 45 keys typed during 15 steals were held and replayed, the stealer got none, and your window got all 120. With key holding turned off, the stealer got 36 and the test failed. A Defender custom scan of the published exe (signatures 1.461.184.0) found no threats. The exe is 17,896,448 bytes, 29 KB more than before M3. Idle in the tray, a build from before the last fixes used 40.8 MB working set and 65.1 MB private, against 40.9 and 64.4 before M3. `GuardrailTests` fails on any hook that isn't low-level; a deliberate `WH_KEYBOARD` failed it.
 
 ## M4: 1.0
 

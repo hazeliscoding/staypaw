@@ -11,7 +11,7 @@ Windows lets apps pull focus to themselves: a chat popup, an installer, a browse
 
 <img align="right" width="150" src="docs/brand/calla/slow-blink.png" alt="Calla, a calico cat-eared homebody with warm white hair, slow-blinks with her arms folded, as Staypaw does when all is quiet.">
 
-> **Status:** in development. Staypaw already logs every steal and protects the app you pick. Holding stray keys is in progress, and there's no release to install yet. See [ROADMAP.md](ROADMAP.md). Until Staypaw ships, use one of the tools under [Alternatives](#alternatives).
+> **Status:** in development. Staypaw already logs every steal, protects the app you pick and holds stray keys, but there's no release to install yet. See [ROADMAP.md](ROADMAP.md). Until Staypaw ships, use one of the tools under [Alternatives](#alternatives).
 
 <br clear="right">
 
