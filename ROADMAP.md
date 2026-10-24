@@ -37,6 +37,18 @@ What the design must protect. Everything else gets ordinary good design.
 
 - **The wordmark is Fredoka SemiBold,** lowercase and outlined, beside the mark in `lockup.svg` and `lockup-dark.svg`, as in Sweepling. The README's title is the lockup. `scripts/make_lockup.py` builds both from the mark, so they follow it when the real logo arrives. This gives up a typeface of Staypaw's own: it shares Sweepling's.
 - **Calla Keyes joins as Staypaw's character, beside the placeholder mark.** She is a calico homebody who sits beside your work like a cat on a warm keyboard and won't move unless you pick her up yourself. She appears in the README, in `docs/brand/calla/` and in launch posts. The paw mark stays the logo and the app icon. Her art was drawn with an AI image model, and it is Apache-2.0 like the code; the README says both. Her stay-put sticker stays out of the README until its see-through gaps are filled, because they show on GitHub's dark mode. This gives up a single mark, and the sticker that shows a steal being undone.
+- **Calla greets you on first launch, and again from "About Staypaw" in the tray menu.** One small window shows her slow-blink sticker, what Staypaw does, how to protect an app (or which app is protected), the trust contract in a line and the version. A tray-only app otherwise starts with no sign at all. `%APPDATA%\Staypaw\welcomed` records that the welcome was shown. The window is built when it opens and dropped when it closes. This gives up 73 KB of exe (17,792,512 to 17,867,264 bytes), and adds a window at first launch: a focus change Staypaw makes itself, right after you launched it.
+- **Calla costs no idle memory, but drawing anything costs about 21 MB that Staypaw keeps.** Each run launched the native build fresh on the same machine:
+
+  | Build, state | Working set | Private |
+  |---|---|---|
+  | Before Calla, tray only, 60 s | 40.8 MB | 65.4 MB |
+  | With Calla, tray only, 60 s | 40.9 MB | 64.4 MB |
+  | With Calla, welcome open, 60 s | 66.3 MB | 86.0 MB |
+  | With Calla, 120 s after closing it | 68.0 MB | 86.6 MB |
+  | With Calla, tray menu open instead, 20 s | 62.6 MB | 81.5 MB |
+
+  The tray menu costs as much as the window: the first thing Avalonia draws starts its renderer, which isn't released until Staypaw quits. The welcome pays at first launch what the first tray click pays anyway. This gives up M1's idle figure as the whole story: it holds only until the menu or the window first opens.
 
 ## M0: Placeholder (as soon as possible)
 
@@ -104,7 +116,7 @@ What the design must protect. Everything else gets ordinary good design.
 - An elevated mode that can protect admin apps.
 - Calla's stay-put sticker beside "Before and after", once its see-through gaps are filled in anime-pipeline.
 - Calla's keys-held and on-guard stickers and her night-watch outfit, drawn in anime-pipeline. On-guard would be the README hero.
-- Calla inside the app, after measuring what she adds to the exe size and idle memory.
+- Try Avalonia's software renderer for the tray menu and the window: the default renderer keeps about 21 MB once either first opens.
 
 ## Not planned
 
