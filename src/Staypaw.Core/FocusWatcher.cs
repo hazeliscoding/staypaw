@@ -34,8 +34,14 @@ public sealed class FocusWatcher : IDisposable
     // A virtual-key code no program uses, for the fallback in ForceForeground.
     private const ushort NoOpKey = 0xE8;
 
+    // Tags on the keys Staypaw sends, so its own hook lets them through. The last replayed key marks the batch landed.
+    private const nuint ReplayTag = 0x53545901;
+    private const nuint LastReplayTag = 0x53545902;
+    private const nuint NoOpTag = 0x53545903;
+
     private readonly FocusLog _log;
     private readonly InputTracker _input = new();
+    private readonly KeyHolder _held = new();
     private readonly Queue<(WindowInfo Window, int EventTime, int LastInputInfo)> _pending = new();
     private readonly uint _ownPid = (uint)Environment.ProcessId;
     private readonly WINEVENTPROC _onForeground;
@@ -48,7 +54,16 @@ public sealed class FocusWatcher : IDisposable
     private HWINEVENTHOOK _foregroundHook;
     private HWINEVENTHOOK _focusHook;
     private nuint _pollTimer;
+    private KeyboardHook? _keyboard;
     private HWND _lastSeenForeground;
+
+    // The foreground window once the latest judgement, and any restore, finished. The keyboard hook's thread holds
+    // keys typed while any other window has focus, including during the judging.
+    private volatile nint _judged;
+
+    // The window the latest judgement left you in: the one restored, or the one you switched to. Null after a change
+    // that stood without being yours.
+    private HWND _yours;
     private WindowInfo? _tracked;
     private bool _draining;
     private int? _lastBogusLogged;
@@ -72,6 +87,9 @@ public sealed class FocusWatcher : IDisposable
     public event EventHandler? Changed;
 
     public static string LogPath => FocusLog.DefaultPath;
+
+    /// <summary>For tests that stand in for you typing: Raw Input never reports keys a program sends.</summary>
+    internal InputTracker Input => _input;
 
     /// <summary>The exe name of the app whose windows keep focus even while you're idle, or null for none.</summary>
     public string? ProtectedApp { get; set; }
@@ -108,6 +126,9 @@ public sealed class FocusWatcher : IDisposable
         }
 
         _lastSeenForeground = foreground;
+        _judged = foreground;
+        _yours = foreground;
+        _keyboard = new KeyboardHook(OnKey);
         _foregroundHook = PInvoke.SetWinEventHook(PInvoke.EVENT_SYSTEM_FOREGROUND, PInvoke.EVENT_SYSTEM_FOREGROUND,
             HMODULE.Null, _onForeground, 0, 0, PInvoke.WINEVENT_OUTOFCONTEXT);
 
@@ -136,22 +157,30 @@ public sealed class FocusWatcher : IDisposable
         }
 
         _foregroundHook = _focusHook = HWINEVENTHOOK.Null;
+        _keyboard?.Dispose();
+        _keyboard = null;
         _input.Dispose();
     }
 
     private void CheckForeground()
     {
         var foreground = PInvoke.GetForegroundWindow();
-        if (foreground.IsNull || foreground == _lastSeenForeground)
+        if (!foreground.IsNull && foreground != _lastSeenForeground)
         {
-            return;
+            _lastSeenForeground = foreground;
+            if (_tracked is null || foreground != _tracked.Hwnd)
+            {
+                Enqueue(foreground, Environment.TickCount);
+            }
         }
 
-        _lastSeenForeground = foreground;
-        if (_tracked is null || foreground != _tracked.Hwnd)
+        // Back in the window you were in with no change to judge, as when Windows hands focus back by itself.
+        if (_tracked is not null && foreground == _tracked.Hwnd && foreground != _judged)
         {
-            Enqueue(foreground, Environment.TickCount);
+            _judged = _yours = foreground;
         }
+
+        SettleHeldKeys();
     }
 
     private void Enqueue(HWND hwnd, int time)
@@ -194,6 +223,8 @@ public sealed class FocusWatcher : IDisposable
         {
             _draining = false;
         }
+
+        SettleHeldKeys();
     }
 
     private void Evaluate(WindowInfo next, int eventTime, int lastInputInfo)
@@ -201,6 +232,7 @@ public sealed class FocusWatcher : IDisposable
         var previous = _tracked;
         if (previous is not null && next.Hwnd == previous.Hwnd)
         {
+            _judged = _yours = next.Hwnd;
             return;
         }
 
@@ -208,8 +240,8 @@ public sealed class FocusWatcher : IDisposable
 
         // Input that Raw Input didn't report (touch, pen, some accessibility tools) still moves the system-wide
         // last-input time. Compare against input seen around that moment, not the latest input: mouse moves after
-        // the switch mustn't hide a click we never saw.
-        int? unseen = lastInputInfo != 0 && !_input.SawInputNear(lastInputInfo) ? lastInputInfo : null;
+        // the switch mustn't hide a click we never saw. Keys Staypaw held moved it too.
+        int? unseen = lastInputInfo != 0 && !_input.SawInputNear(lastInputInfo) && !_held.HeldNear(lastInputInfo) ? lastInputInfo : null;
 
         var change = new FocusChange
         {
@@ -242,6 +274,21 @@ public sealed class FocusWatcher : IDisposable
         var restored = previous is not null
                        && Classifier.ShouldRestore(classification, change, IsProtected(previous), repeatStealer)
                        && Restore(previous, next, eventTime, ref note);
+
+        if (previous is not null && (restored || PInvoke.GetForegroundWindow() == previous.Hwnd))
+        {
+            // A restore still pending leaves _judged alone, so keys keep waiting for the retry.
+            _yours = previous.Hwnd;
+            if (PInvoke.GetForegroundWindow() == previous.Hwnd)
+            {
+                _judged = previous.Hwnd;
+            }
+        }
+        else
+        {
+            _judged = next.Hwnd;
+            _yours = classification.Verdict == Verdict.Yours ? next.Hwnd : HWND.Null;
+        }
 
         if (classification.Verdict == Verdict.Steal && !next.IsBogus)
         {
@@ -369,6 +416,7 @@ public sealed class FocusWatcher : IDisposable
         // uses, then try again. It goes to the stealer, which has focus, never to the window being restored.
         var down = new INPUT { type = INPUT_TYPE.INPUT_KEYBOARD };
         down.Anonymous.ki.wVk = (VIRTUAL_KEY)NoOpKey;
+        down.Anonymous.ki.dwExtraInfo = NoOpTag;
         var up = down;
         up.Anonymous.ki.dwFlags = KEYBD_EVENT_FLAGS.KEYEVENTF_KEYUP;
         PInvoke.SendInput([down, up], sizeof(INPUT));
@@ -391,6 +439,92 @@ public sealed class FocusWatcher : IDisposable
             dwFlags = FLASHWINFO_FLAGS.FLASHW_TRAY | FLASHWINFO_FLAGS.FLASHW_TIMERNOFG,
         };
         PInvoke.FlashWindowEx(in info);
+    }
+
+    // On the hook's thread, for every key on the system, so it only compares and copies.
+    private bool OnKey(KBDLLHOOKSTRUCT e)
+    {
+        if (e.dwExtraInfo == NoOpTag)
+        {
+            return false;
+        }
+
+        var key = new HeldKey((ushort)e.vkCode, (ushort)e.scanCode,
+            (e.flags & KBDLLHOOKSTRUCT_FLAGS.LLKHF_UP) != 0, (e.flags & KBDLLHOOKSTRUCT_FLAGS.LLKHF_EXTENDED) != 0);
+        nint foreground = PInvoke.GetForegroundWindow();
+        if (e.dwExtraInfo is not (ReplayTag or LastReplayTag))
+        {
+            return _held.Offer(key, foreground, _judged, unchecked((int)e.time));
+        }
+
+        var again = _held.OnReplayed(key, e.dwExtraInfo == LastReplayTag, foreground, _judged, unchecked((int)e.time), out var next);
+        Replay(next);
+        return again;
+    }
+
+    /// <summary>Once Staypaw has judged where focus is, replays held keys into your window or drops them.</summary>
+    private void SettleHeldKeys()
+    {
+        if (!_held.Holding)
+        {
+            return;
+        }
+
+        var foreground = PInvoke.GetForegroundWindow();
+        var settled = foreground == _judged;
+        var deliver = settled && !foreground.IsNull && foreground == _yours && !IsGame(foreground);
+        Replay(_held.Settle(settled, deliver, Environment.TickCount));
+    }
+
+    // Replayed keys are input a game didn't get from you, which game terms of service forbid.
+    private bool IsGame(HWND hwnd)
+    {
+        var window = WindowInfo.Capture(hwnd);
+        return IsProtected(window) || window.MayBeGame();
+    }
+
+    private unsafe void Replay(HeldKey[]? keys)
+    {
+        if (keys is null)
+        {
+            return;
+        }
+
+        var inputs = new INPUT[keys.Length];
+        for (var i = 0; i < keys.Length; i++)
+        {
+            var key = keys[i];
+            inputs[i].type = INPUT_TYPE.INPUT_KEYBOARD;
+            ref var ki = ref inputs[i].Anonymous.ki;
+            ki.wScan = key.Scan;
+            ki.dwExtraInfo = i == keys.Length - 1 ? LastReplayTag : ReplayTag;
+
+            // A character sent by an input method or a tool rather than a key; the scan field holds the character.
+            if (key.Vk == (ushort)VIRTUAL_KEY.VK_PACKET)
+            {
+                ki.dwFlags = KEYBD_EVENT_FLAGS.KEYEVENTF_UNICODE;
+            }
+            else
+            {
+                ki.wVk = (VIRTUAL_KEY)key.Vk;
+            }
+
+            if (key.Up)
+            {
+                ki.dwFlags |= KEYBD_EVENT_FLAGS.KEYEVENTF_KEYUP;
+            }
+
+            if (key.Extended)
+            {
+                ki.dwFlags |= KEYBD_EVENT_FLAGS.KEYEVENTF_EXTENDEDKEY;
+            }
+        }
+
+        // Windows refuses input aimed at an administrator app, and refused keys never come back through the hook.
+        if (PInvoke.SendInput(inputs, sizeof(INPUT)) != inputs.Length)
+        {
+            _held.Drop();
+        }
     }
 
     /// <summary>Records a restore and returns true if the app now fights back so often that Staypaw backs off.</summary>

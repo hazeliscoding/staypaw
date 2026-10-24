@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
@@ -111,6 +112,31 @@ internal sealed class WindowInfo
 
         var cloaked = 0;
         return PInvoke.DwmGetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_CLOAKED, &cloaked, sizeof(int)).Succeeded && cloaked != 0;
+    }
+
+    /// <summary>
+    /// True if Windows' Game Bar lists this exe as a game, or if the exe couldn't be named at all: anti-cheat shields
+    /// some games even from <c>PROCESS_QUERY_LIMITED_INFORMATION</c>. The list is read from the registry, so the game
+    /// itself is never touched. Matched by file name, so a game moved since Windows listed it still counts.
+    /// </summary>
+    public bool MayBeGame()
+    {
+        if (ExePath.Length == 0)
+        {
+            return true;
+        }
+
+        using var games = Registry.CurrentUser.OpenSubKey(@"System\GameConfigStore\Children");
+        foreach (var id in games?.GetSubKeyNames() ?? [])
+        {
+            using var game = games!.OpenSubKey(id);
+            if (game?.GetValue("MatchedExeFullPath") is string path && Path.GetFileName(path).Equals(ExeName, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static unsafe bool IsElevated(HANDLE process)

@@ -1,5 +1,6 @@
 AttachThreadInput
 BringWindowToTop
+CallNextHookEx
 CloseHandle
 CreateWindowEx
 DefWindowProc
@@ -18,6 +19,7 @@ GetCurrentThreadId
 GetCursorPos
 GetForegroundWindow
 GetLastInputInfo
+GetMessage
 GetMessageTime
 GetModuleHandle
 GetProcessTimes
@@ -29,10 +31,12 @@ HWND_MESSAGE
 IsIconic
 IsWindow
 IsWindowVisible
+KBDLLHOOKSTRUCT
 KillTimer
 OpenProcess
 OpenProcessToken
 PeekMessage
+PostThreadMessage
 QueryFullProcessImageName
 RAWINPUT
 RegisterClassEx
@@ -42,11 +46,14 @@ RID_DEVICE_INFO_TYPE
 SendInput
 SetForegroundWindow
 SetTimer
+SetWindowsHookEx
 SetWinEventHook
 SystemParametersInfo
 TOKEN_ELEVATION
+UnhookWindowsHookEx
 UnhookWinEvent
 UnregisterClass
 WindowFromPoint
 WINEVENT_OUTOFCONTEXT
 WM_INPUT
+WM_QUIT
