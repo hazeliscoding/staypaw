@@ -9,11 +9,17 @@ namespace Staypaw.Desktop;
 
 public partial class App : Application
 {
-    private static readonly string ProtectedAppFile =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Staypaw", "protected-app.txt");
+    private static readonly string DataFolder =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Staypaw");
+
+    private static readonly string ProtectedAppFile = Path.Combine(DataFolder, "protected-app.txt");
+
+    // The welcome shows once, on first launch; deleting this file shows it again.
+    private static readonly string WelcomedFile = Path.Combine(DataFolder, "welcomed");
 
     private FocusWatcher? _watcher;
     private IClassicDesktopStyleApplicationLifetime? _desktop;
+    private AboutWindow? _about;
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -28,6 +34,10 @@ public partial class App : Application
             _watcher.Changed += (_, _) => UpdateTray();
             _watcher.Start();
             UpdateTray();
+            if (FirstLaunch())
+            {
+                ShowAbout();
+            }
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -59,6 +69,7 @@ public partial class App : Application
         }
 
         menu.Items.Add(Item("Open the focus log", OpenLog));
+        menu.Items.Add(Item("About Staypaw", ShowAbout));
         menu.Items.Add(new NativeMenuItemSeparator());
         menu.Items.Add(Item("Quit Staypaw", () => _desktop?.Shutdown()));
 
@@ -72,7 +83,7 @@ public partial class App : Application
         _watcher!.ProtectedApp = app;
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(ProtectedAppFile)!);
+            Directory.CreateDirectory(DataFolder);
             File.WriteAllText(ProtectedAppFile, app ?? "");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -96,6 +107,41 @@ public partial class App : Application
             Trace.WriteLine("Staypaw: couldn't read the protected app: " + ex.Message);
             return null;
         }
+    }
+
+    private void ShowAbout()
+    {
+        if (_about is not null)
+        {
+            _about.Activate();
+            return;
+        }
+
+        // Built on demand and dropped on close, so Calla's bitmap isn't held while Staypaw idles in the tray.
+        _about = new AboutWindow(_watcher!.ProtectedApp);
+        _about.Closed += (_, _) => _about = null;
+        _about.Show();
+    }
+
+    private static bool FirstLaunch()
+    {
+        if (File.Exists(WelcomedFile))
+        {
+            return false;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(DataFolder);
+            File.WriteAllText(WelcomedFile, "");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // The welcome still shows; it will just show again next launch.
+            Trace.WriteLine("Staypaw: couldn't save the welcome marker: " + ex.Message);
+        }
+
+        return true;
     }
 
     private static void OpenLog()

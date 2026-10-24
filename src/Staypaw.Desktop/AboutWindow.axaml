@@ -1,0 +1,34 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Staypaw.Desktop.AboutWindow"
+        Title="Staypaw"
+        Icon="avares://Staypaw/Assets/staypaw.ico"
+        SizeToContent="WidthAndHeight"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Surface1}"
+        FontFamily="{StaticResource SansFont}"
+        FontSize="{StaticResource FontBody}">
+  <Grid ColumnDefinitions="Auto,Auto" Margin="32">
+    <Image Source="avares://Staypaw/Assets/slow-blink-256.png"
+           Width="160" Height="160" VerticalAlignment="Top"
+           RenderOptions.BitmapInterpolationMode="HighQuality"
+           AutomationProperties.Name="Calla, Staypaw's mascot, slow-blinks: all is quiet." />
+
+    <StackPanel Grid.Column="1" Width="320" Margin="24,8,0,0" Spacing="{StaticResource Space3}">
+      <TextBlock Text="Staypaw is in your tray"
+                 FontSize="{StaticResource FontTitle}" FontWeight="SemiBold"
+                 Foreground="{DynamicResource Text1}" />
+      <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource Text1}"
+                 Text="When another app takes your keyboard focus, Staypaw puts it back and tells you which app did it." />
+      <TextBlock x:Name="Protection" TextWrapping="Wrap" Foreground="{DynamicResource Text1}" />
+      <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource Text2}" FontSize="{StaticResource FontCaption}"
+                 Text="Nothing injected, no network, and no keys stored." />
+      <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+        <TextBlock x:Name="Version" VerticalAlignment="Center"
+                   Foreground="{DynamicResource Text2}" FontSize="{StaticResource FontCaption}" />
+        <Button Grid.Column="1" Content="Got it" IsDefault="True" IsCancel="True" Click="GotIt" />
+      </Grid>
+    </StackPanel>
+  </Grid>
+</Window>

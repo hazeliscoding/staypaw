@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <AvaloniaResource Include="..\..\docs\brand\staypaw.ico" Link="Assets\staypaw.ico" />
+    <AvaloniaResource Include="..\..\docs\brand\calla\slow-blink-256.png" Link="Assets\slow-blink-256.png" />
   </ItemGroup>
 
 </Project>
