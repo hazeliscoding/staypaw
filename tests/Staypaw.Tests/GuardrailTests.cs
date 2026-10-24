@@ -1,12 +1,34 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Staypaw.Tests;
 
-/// <summary>Structural rules from AGENTS.md: the core has no UI, and nothing uses the network.</summary>
+/// <summary>Structural rules from AGENTS.md: the core has no UI, nothing uses the network, and every hook stays in
+/// Staypaw's own process.</summary>
 public class GuardrailTests
 {
     private static readonly Assembly Core = Assembly.Load("Staypaw.Core");
     private static readonly Assembly Desktop = Assembly.Load("Staypaw");
+
+    // Only the low-level hooks run in the process that sets them; every other system-wide hook loads into other apps.
+    [Fact]
+    public void Every_Windows_hook_is_low_level()
+    {
+        var root = AppContext.BaseDirectory;
+        while (!File.Exists(Path.Combine(root, "AGENTS.md")))
+        {
+            root = Path.GetDirectoryName(root.TrimEnd(Path.DirectorySeparatorChar))!;
+        }
+
+        var hooks = HookTypes(Directory.EnumerateFiles(Path.Combine(root, "src"), "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+
+        Assert.NotEmpty(hooks);
+        Assert.All(hooks, hook => Assert.EndsWith("_LL", hook, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void The_check_finds_a_hook_that_loads_into_other_apps() =>
+        Assert.Equal(["WH_KEYBOARD"], HookTypes(["PInvoke.SetWindowsHookEx(WINDOWS_HOOK_ID.WH_KEYBOARD, proc, module, 0);"]));
 
     [Fact]
     public void Core_does_not_reference_Avalonia() => Assert.Empty(References(Core, "Avalonia"));
@@ -25,6 +47,10 @@ public class GuardrailTests
     [Fact]
     public void The_check_finds_network_references() =>
         Assert.NotEmpty(References(Assembly.Load("System.Net.Http"), "System.Net"));
+
+    private static string[] HookTypes(IEnumerable<string> sources) =>
+        [.. sources.SelectMany(source => Regex.Matches(source, @"SetWindowsHookEx\(\s*(?:WINDOWS_HOOK_ID\.)?(\w+)"))
+            .Select(match => match.Groups[1].Value)];
 
     private static string[] References(Assembly assembly, string prefix) =>
         [.. assembly.GetReferencedAssemblies()
