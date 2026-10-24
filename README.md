@@ -64,4 +64,4 @@ Issues are welcome. Planning lives in [ROADMAP.md](ROADMAP.md).
 
 ## License
 
-[Apache-2.0](LICENSE). Calla, the cat-eared homebody in this README, was drawn with an AI image model and is Apache-2.0 like the code.
+[Apache-2.0](LICENSE). Calla, the cat-eared homebody in this README, was drawn with an AI image model and is Apache-2.0 like the code. Hand-drawn art of her by [@wrenishacking](https://github.com/wrenishacking) is on the way.

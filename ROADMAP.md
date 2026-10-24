@@ -116,6 +116,7 @@ What the design must protect. Everything else gets ordinary good design.
 - An elevated mode that can protect admin apps.
 - Calla's stay-put sticker beside "Before and after", once its see-through gaps are filled in anime-pipeline.
 - Calla's keys-held and on-guard stickers and her night-watch outfit, drawn in anime-pipeline. On-guard would be the README hero.
+- Hand-drawn Calla art by [@wrenishacking](https://github.com/wrenishacking), on the way. Agree its license with the artist before it goes in, since the AI-drawn stickers are Apache-2.0 like the code.
 - Try Avalonia's software renderer for the tray menu and the window: the default renderer keeps about 21 MB once either first opens.
 
 ## Not planned
