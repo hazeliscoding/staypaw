@@ -12,10 +12,10 @@ These are the working rules for agents in this repo. Staypaw is a Windows tray a
 
 Staypaw watches the keyboard. People run it only if they can trust it, so never break these, not even in dev tooling that ships.
 
-- **No code in other processes.** No DLL injection, no `CreateRemoteThread`, no hook DLLs loaded into other apps. Use only out-of-context WinEvent hooks, Raw Input and low-level hooks (`WH_KEYBOARD_LL`, `WH_MOUSE_LL`), which all run in Staypaw's own process. Work laptops ban injection, and anti-cheat flags it.
-- **Never touch a game's process.** Identify a window's app with `PROCESS_QUERY_LIMITED_INFORMATION` and nothing more: no memory reads and no input sent to it. Held keys aimed at a game are dropped, never replayed. Game terms of service forbid tools that read or drive the client, and replayed keys are fake input.
+- **No code in other processes.** No DLL injection, no `CreateRemoteThread`, no hook DLLs loaded into other apps. Use only out-of-context WinEvent hooks, Raw Input and low-level hooks (`WH_KEYBOARD_LL`, `WH_MOUSE_LL`), which all run in Staypaw's own process. A test fails on any other hook type passed to `SetWindowsHookEx`. Work laptops ban injection, and anti-cheat flags it.
+- **Never touch a game's process.** Identify a window's app with `PROCESS_QUERY_LIMITED_INFORMATION` and nothing more: no memory reads and no input sent to it. Held keys aimed at a game are dropped, never replayed. A game is the protected app, an exe that Windows' Game Bar lists, or an app Staypaw can't name, because anti-cheat can hide even a process's name. Game terms of service forbid tools that read or drive the client, and replayed keys are fake input.
 - **No networking code.** No `HttpClient`, sockets, updater or telemetry, and no package that brings them in. A test fails on any `System.Net` use in Staypaw's assemblies. A keyboard watcher that talks to the network can't be trusted.
-- **Never record which key was pressed.** The log and memory keep only the time of a keypress. The one exception is held keys (M3): kept in memory until they're delivered or dropped, and never written anywhere. Anything more makes Staypaw a keylogger.
+- **Never record which key was pressed.** The log and memory keep only the time of a keypress. The one exception is held keys (M3): kept in memory until they're delivered or dropped, and never written anywhere. Never trace or log a `HeldKey`; it has no `ToString` beyond its type name for that reason. Anything more makes Staypaw a keylogger.
 - **Run unelevated.** Don't set `requireAdministrator` in the manifest. An elevated mode is a Later item with its own decision.
 - **Code ported from NoFocusSteal keeps its MIT notice** in `THIRD-PARTY-NOTICES.md`. The license requires it.
 
@@ -25,6 +25,7 @@ Staypaw watches the keyboard. People run it only if they can trust it, so never 
 - `Staypaw.Core` holds the watcher and the rules and never references Avalonia; a test enforces it. Rules take the event and the time as inputs and call no Win32, so tests run without real windows.
 - Win32 calls go through CsWin32 (`NativeMethods.txt`), not hand-written `DllImport`. The generated code is typed and NativeAOT-safe.
 - NativeAOT must stay free of warnings: no reflection-based serialization. Use source generators.
+- The keyboard hook runs on a thread of its own, and its callback only compares and copies. Every key on the system waits for it, and Windows quietly removes a hook that answers too slowly.
 
 ## Brand
 
@@ -54,7 +55,7 @@ One meaning per term. Use these words in code, docs and commits.
 ## Commands
 
 - `dotnet build` builds everything. `dotnet test` runs the tests.
-- `tests/Staypaw.Tests/bin/Release/net10.0-windows/Staypaw.Tests.exe -explicit only` runs the explicit tests, which steal focus on the real desktop. Run them only when the owner isn't typing.
+- `tests/Staypaw.Tests/bin/Release/net10.0-windows/Staypaw.Tests.exe -explicit only` runs the explicit tests, which steal focus on the real desktop, and one types an unused key (0x97) into its own test windows. Run them only when the owner isn't typing.
 - `tools/Staypaw.StealTest` takes focus the way misbehaving apps do: `Staypaw.StealTest.exe <delaySeconds> [alt|attach|both] [repeatMs]`. It prints how many keys reached it.
 - `dotnet publish src/Staypaw.Desktop -c Release -r win-x64` builds the native exe. With Visual Studio 18, put `%ProgramFiles(x86)%\Microsoft Visual Studio\Installer` on `PATH` first: its `VsDevCmd.bat` calls `vswhere.exe` without a path, and the error text breaks the NativeAOT link step ("'vswhere.exe' is not recognized").
 - `dotnet run scripts/make-icons.cs` regenerates `docs/brand/staypaw.ico` and `app-icon-256.png` from `app-icon.svg`.

@@ -11,7 +11,7 @@ Windows lets apps pull focus to themselves: a chat popup, an installer, a browse
 
 <img align="right" width="150" src="docs/brand/calla/slow-blink.png" alt="Calla, a calico cat-eared homebody with warm white hair, slow-blinks with her arms folded, as Staypaw does when all is quiet.">
 
-> **Status:** in development. Staypaw already logs every steal and protects the app you pick, but there's no release to install yet. See [ROADMAP.md](ROADMAP.md). Until Staypaw ships, use one of the tools under [Alternatives](#alternatives).
+> **Status:** in development. Staypaw already logs every steal and protects the app you pick. Holding stray keys is in progress, and there's no release to install yet. See [ROADMAP.md](ROADMAP.md). Until Staypaw ships, use one of the tools under [Alternatives](#alternatives).
 
 <br clear="right">
 
@@ -31,7 +31,7 @@ Planned for 1.0:
 
 - **Protects an app you pick.** Nothing takes focus from it unless you click or Alt+Tab away, even while you're idle.
 - **Keeps focus where you're typing.**
-- **Holds stray keys.** A key you press during a steal never reaches the app that stole focus.
+- **Holds stray keys.** A key you press during a steal never reaches the app that stole focus. It goes to your window once focus is back, or is dropped if that window is a game.
 - **Tells you which app did it,** in a log you can open.
 - **Installs signed,** through winget.
 
@@ -39,9 +39,9 @@ Planned for 1.0:
 
 Staypaw watches your keyboard, so it has to be easy to trust.
 
-- **Nothing injected.** Staypaw never loads code into another app, and never touches a game's process.
+- **Nothing injected.** Staypaw never loads code into another app, and never touches a game's process. Its keyboard hook is the low-level kind, which runs inside Staypaw itself.
 - **No network.** There is no networking code, no updater and no telemetry.
-- **No keys stored.** It keeps the time of each keypress, never the key. Keys held during a steal stay in memory for a moment, then go to your window or are dropped. Nothing about them is written to disk.
+- **No keys stored.** It keeps the time of each keypress, never the key. Keys held during a steal stay in memory for a moment, then go to your window or are dropped. They never go to a game. Nothing about them is written to disk.
 - **Open source,** so you can check all of this instead of trusting it.
 
 ## Alternatives
