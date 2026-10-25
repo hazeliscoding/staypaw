@@ -44,14 +44,6 @@ jobs:
       - name: Publish
         run: dotnet publish src/Staypaw.Desktop --configuration Release --runtime win-x64 -warnaserror
 
-      # Setup waits up to 30 s for Staypaw to answer its install hook, then warns that the install failed.
-      - name: Install hook
-        shell: pwsh
-        run: |
-          $p = Start-Process src/Staypaw.Desktop/bin/Release/net10.0-windows/win-x64/publish/Staypaw.exe -ArgumentList '--veloapp-install', '1.0.0' -PassThru
-          if (-not $p.WaitForExit(10000)) { $p.Kill(); throw "Staypaw didn't exit on Velopack's install hook" }
-          if ($p.ExitCode -ne 0) { throw "Staypaw exited with $($p.ExitCode) on Velopack's install hook" }
-
       # gitleaks is pinned and checked against its release checksum. --full-history HEAD scans this branch's
       # history only; by default it scans every ref, so one branch's leak would fail every run.
       - name: Secret scan

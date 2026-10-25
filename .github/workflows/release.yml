@@ -103,15 +103,21 @@ jobs:
           [ordered]@{ Endpoint = $env:ENDPOINT; CodeSigningAccountName = $env:ACCOUNT; CertificateProfileName = $env:PROFILE } |
             ConvertTo-Json | Out-File -Encoding utf8NoBOM "$env:RUNNER_TEMP/signing.json"
 
-      # Only Setup: Staypaw has no updater, so no portable bundle (it carries Velopack's updater) and no delta.
+      # Setup.exe and the update packages installed copies download. The previous release is fetched first so vpk
+      # can add a small delta update from it; a release before 1.1.0 has no packages to start from.
+      # No portable bundle from vpk: it carries Velopack's updater, and the zip below is the app alone.
       # Setup empties %LOCALAPPDATA%\<packId> on every install, so the ID must never be Staypaw: that folder holds the log.
-      # Staypaw answers Velopack's hooks without its SDK, which brings in network code, hence --skipVeloAppCheck.
-      - name: Setup
+      - name: Installer and updates
         shell: pwsh
         run: |
           dotnet tool restore
+          # Only tag builds make deltas: a manual run's version may be below the latest release, which vpk refuses.
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            dotnet vpk download github --repoUrl https://github.com/${{ github.repository }} --token ${{ github.token }} --outputDir artifacts/velopack
+            if ($LASTEXITCODE -ne 0) { Write-Host 'No earlier Velopack release to build a delta from'; $global:LASTEXITCODE = 0 }
+          }
           $sign = if ($env:SIGN -eq 'true') { '--azureTrustedSignFile', "$env:RUNNER_TEMP/signing.json" } else { @() }
-          dotnet vpk pack --runtime win-x64 --packId hazeliscoding.Staypaw --packVersion ${{ env.VERSION }} --packTitle Staypaw --packAuthors "Hazel Granados" --packDir artifacts/publish --mainExe Staypaw.exe --icon docs/brand/staypaw.ico --shortcuts StartMenuRoot --noPortable --delta None --skipVeloAppCheck --outputDir artifacts/velopack @sign
+          dotnet vpk pack --runtime win-x64 --packId hazeliscoding.Staypaw --packVersion ${{ env.VERSION }} --packTitle Staypaw --packAuthors "Hazel Granados" --packDir artifacts/publish --mainExe Staypaw.exe --icon docs/brand/staypaw.ico --shortcuts StartMenuRoot --noPortable --outputDir artifacts/velopack @sign
           if ($LASTEXITCODE -ne 0) { throw 'vpk pack failed' }
 
       - name: Package
@@ -129,7 +135,12 @@ jobs:
           Copy-Item README.md, LICENSE, THIRD-PARTY-NOTICES.md $stage
           Compress-Archive -Path "$stage/*" -DestinationPath "$out/staypaw-portable-win-x64.zip" -Force
           Copy-Item artifacts/velopack/hazeliscoding.Staypaw-win-Setup.exe "$out/staypaw-setup-win-x64.exe"
-          $sums = Get-ChildItem "$out/*" -Include *.zip, *.exe | ForEach-Object {
+          # This version's update packages and the feed. The feed also lists older versions,
+          # whose packages stay on their own releases.
+          $velopack = Get-Content artifacts/velopack/assets.win.json | ConvertFrom-Json
+          foreach ($asset in $velopack | Where-Object Type -ne 'Installer') { Copy-Item "artifacts/velopack/$($asset.RelativeFileName)" $out }
+          Copy-Item artifacts/velopack/releases.win.json $out
+          $sums = Get-ChildItem "$out/*" -Include *.zip, *.exe, *.nupkg | ForEach-Object {
             "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"
           }
           # LF endings, so `sha256sum -c SHA256SUMS` works on any platform.
