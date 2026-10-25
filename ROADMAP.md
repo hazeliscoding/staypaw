@@ -48,7 +48,7 @@ What the design must protect. Everything else gets ordinary good design.
   | With Calla, 120 s after closing it | 68.0 MB | 86.6 MB |
   | With Calla, tray menu open instead, 20 s | 62.6 MB | 81.5 MB |
 
-  The tray menu costs as much as the window: the first thing Avalonia draws starts its renderer, which isn't released until Staypaw quits. The welcome pays at first launch what the first tray click pays anyway. This gives up M1's idle figure as the whole story: it holds only until the menu or the window first opens.
+  The tray menu costs as much as the window: the first thing Avalonia draws starts its renderer, which isn't released until Staypaw quits. The welcome pays at first launch what the first tray click pays anyway. This gives up M1's idle figure as the whole story: it holds only until the menu or the window first opens. *Superseded 2026-10-25: Staypaw draws in software, and drawing costs about 10 MB.*
 
 ## Decisions (2026-10-24)
 
@@ -73,6 +73,16 @@ What the design must protect. Everything else gets ordinary good design.
 - **Open work moves to GitHub issues and milestones,** the owner's choice, as sdl3-porter did after 1.0. With two releases out, open work is easier to find, follow and comment on as issues, and the [Staypaw board](https://github.com/users/hazeliscoding/projects/12) shows all of it. M5's last item became the v1.1.1 milestone (#2). A Getting found milestone, added on the way, holds the winget install with M4's open "Done when" (#3) and a SmartScreen check (#4). Later became #5 to #12, labelled `later`. The old checklists are in `git show v1.1.0:ROADMAP.md`. This gives up changing the plan in the same pull request as the code, and agents now read it through `gh`.
 - **`main` takes changes only by pull request,** the owner's call, as in Gil Sweep and Prompuff. A ruleset with no bypass refuses direct pushes, force-pushes and deleting `main`, requires CI's `build` check on a branch that's up to date with it, and merges by rebase only, so every commit on `main` has built and tested. This gives up pushing straight to `main`, which every change before this one did.
 - **The 1.x releases go smallest first,** the owner's call: v1.2 pause (#6), v1.3 rules by launcher (#7), v1.4 a window that appears without taking your keyboard (#5). Each release ships something soon, and the hardest design jobs get the most time. The software renderer (#12) joins v1.1.1, so the first release an installed copy fetches by itself carries a real change. Each milestone's open questions are settled as a dated decision before it's built. The elevated mode (#8) stays `later` until the log shows how often admin apps steal, and Calla's art (#9, #10, #11) stays `later` until it's drawn. This gives up the most-reacted ask in PowerToys #65 first: it comes last.
+- **Staypaw draws in software, as Sweepling does,** with Avalonia's `Win32RenderingMode.Software`. The default renderer holds about 60 MB more private memory from the moment Staypaw starts, before anything is drawn, and its first drawing adds about 21 MB more of working set; it gives neither back. Each run launched the native build fresh on the same machine, measured as on 2026-10-23. Neither build was installed, so neither checked for updates:
+
+  | State | Working set, default | Working set, software | Private, default | Private, software |
+  |---|---|---|---|---|
+  | Tray only, 60 s | 42.8 MB | 25.7 MB | 67.0 MB | 7.5 MB |
+  | Welcome open, 60 s | 67.3 MB | 36.3 MB | 89.4 MB | 11.1 MB |
+  | 120 s after closing it | 68.5 MB | 35.6 MB | 89.5 MB | 9.1 MB |
+  | Tray menu open instead, 20 s | 64.5 MB | 37.1 MB | 83.1 MB | 11.9 MB |
+
+  Opening the menu took 0.08 s of CPU against 0.12 s. The welcome and the menu match the default renderer's within 8 of 255 in any colour channel, which is antialiasing. The exe grew by 4 KB, from 23,991,296 to 23,995,392 bytes. This gives up the GPU: a window that animated or filled the screen would cost CPU instead, and Staypaw has neither.
 
 ## Shipped
 
