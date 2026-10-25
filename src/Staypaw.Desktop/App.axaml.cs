@@ -164,12 +164,15 @@ public partial class App : Application
         Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
     }
 
-    private static NativeMenuItem Label(string text) => new(text) { IsEnabled = false };
+    private static NativeMenuItem Label(string text) => new(Literal(text)) { IsEnabled = false };
 
     private static NativeMenuItem Item(string text, Action action)
     {
-        var item = new NativeMenuItem(text);
+        var item = new NativeMenuItem(Literal(text));
         item.Click += (_, _) => action();
         return item;
     }
+
+    // A menu item reads _ as an access key, so ffxiv_dx11.exe showed as ffxivdx11.exe.
+    private static string Literal(string text) => text.Replace("_", "__", StringComparison.Ordinal);
 }
