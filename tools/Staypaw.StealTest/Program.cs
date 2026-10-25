@@ -15,6 +15,7 @@ var delaySeconds = args.Length > 0 ? int.Parse(args[0], CultureInfo.InvariantCul
 var method = args.Length > 1 ? args[1] : "both";
 var repeatMs = args.Length > 2 ? int.Parse(args[2], CultureInfo.InvariantCulture) : 0;
 var keys = 0;
+var steals = 0;
 
 ApplicationConfiguration.Initialize();
 using var form = new Form
@@ -24,33 +25,34 @@ using var form = new Form
     StartPosition = FormStartPosition.CenterScreen,
     KeyPreview = true,
 };
-form.Controls.Add(new Label
-{
-    Dock = DockStyle.Fill,
-    Padding = new Padding(16),
-    Text = "This window just took focus.\r\n\r\nIt counts the keys that reach it and closes itself in 20 seconds.",
-});
+// Live, so a recording shows what reached it.
+var status = new Label { Dock = DockStyle.Fill, Padding = new Padding(16) };
+void ShowStatus() => status.Text =
+    $"This window takes focus the way misbehaving apps do, and closes itself in 20 seconds.\r\n\r\nTook focus: {steals}\r\nKeys that reached it: {keys}";
+ShowStatus();
+form.Controls.Add(status);
 form.KeyDown += (_, e) =>
 {
     // 0xE8 is the unused key Staypaw sends a stealer to win back the foreground, never one you typed.
     if (e.KeyValue != 0xE8)
     {
         keys++;
+        ShowStatus();
     }
 };
 form.FormClosed += (_, _) => Application.Exit();
-Application.AddMessageFilter(new StealOnRequest(() => Steal((HWND)form.Handle, method)));
+Application.AddMessageFilter(new StealOnRequest(() => StealAndCount((HWND)form.Handle)));
 
 var delay = new Timer { Interval = Math.Max(1, delaySeconds) * 1000 };
 delay.Tick += (_, _) =>
 {
     delay.Stop();
     form.Show();
-    Steal((HWND)form.Handle, method);
+    StealAndCount((HWND)form.Handle);
     if (repeatMs > 0)
     {
         var again = new Timer { Interval = Math.Max(100, repeatMs) };
-        again.Tick += (_, _) => Steal((HWND)form.Handle, method);
+        again.Tick += (_, _) => StealAndCount((HWND)form.Handle);
         again.Start();
     }
 
@@ -61,6 +63,13 @@ delay.Tick += (_, _) =>
 delay.Start();
 Application.Run();
 Console.WriteLine($"keys={keys}");
+
+void StealAndCount(HWND hwnd)
+{
+    steals++;
+    ShowStatus();
+    Steal(hwnd, method);
+}
 
 static void Steal(HWND hwnd, string method)
 {
