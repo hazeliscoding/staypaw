@@ -9,9 +9,19 @@
 
 Windows lets apps pull focus to themselves: a chat popup, an installer, a browser an agent is driving. Your next keypress lands in the wrong window, sometimes on its default button. Space has cancelled a Visual Studio install, and Esc has killed a Bluetooth transfer. [PowerToys #65](https://github.com/microsoft/PowerToys/issues/65) has asked for a fix since 2019.
 
+<img src="docs/screenshots/demo.gif" alt="A sentence is typed while another app takes focus four times. Without Staypaw, the typing stops at the first steal and the rest goes to the other app. With Staypaw, focus comes straight back each time and the whole sentence lands.">
+
+## Install
+
 <img align="right" width="150" src="docs/brand/calla/slow-blink.png" alt="Calla, a calico cat-eared homebody with warm white hair, slow-blinks with her arms folded, as Staypaw does when all is quiet.">
 
-> **Status:** in development. Staypaw already logs every steal, protects the app you pick and holds stray keys, but there's no release to install yet. See [ROADMAP.md](ROADMAP.md). Until Staypaw ships, use one of the tools under [Alternatives](#alternatives).
+Download `staypaw-setup-win-x64.exe` from the [latest release](https://github.com/hazeliscoding/staypaw/releases/latest) and run it. It installs for you alone, without admin rights, and starts Staypaw in your tray, then again each time you sign in.
+
+SmartScreen may call it an unrecognized app until enough people have run it. Under **More info**, it names Hazel Granados as the publisher: that's the signature on every release.
+
+- **No installer:** unzip `staypaw-portable-win-x64.zip` anywhere and run `Staypaw.exe`. It starts at sign-in from that folder, so turn off Start with Windows in its tray menu before you move or delete it.
+- **Checksums:** each release's `SHA256SUMS` lists both files.
+- **Uninstall:** from Settings › Apps › Installed apps.
 
 <br clear="right">
 
@@ -32,13 +42,29 @@ From reports in [PowerToys #65](https://github.com/microsoft/PowerToys/issues/65
 
 <img align="right" width="180" src="docs/brand/calla/that-one.png" alt="Calla holds a stray pop-up window out at arm's length and frowns at it, as Staypaw's log names the app that stole focus.">
 
-Planned for 1.0:
-
 - **Protects an app you pick.** Nothing takes focus from it unless you click or Alt+Tab away, even while you're idle.
 - **Keeps focus where you're typing.**
 - **Holds stray keys.** A key you press during a steal never reaches the app that stole focus. It goes to your window once focus is back, or is dropped if that window is a game.
 - **Tells you which app did it,** in a log you can open.
-- **Installs signed,** through winget.
+- **Installs signed,** for you alone, without admin rights.
+
+<br clear="right">
+
+## Using it
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/tray-dark.png">
+  <img align="right" width="259" src="docs/screenshots/tray-light.png" alt="Staypaw's tray menu: protecting ffxiv_dx11.exe, last stealer setup.exe, top stealer chrome.exe with 12 steals, Start with Windows ticked, and items to open the focus log, see About and quit.">
+</picture>
+
+Right-click the paw in your tray. From there you can:
+
+- protect the app you were just in;
+- see which app took focus last, and which takes it most;
+- turn Start with Windows off or on;
+- open the focus log, which lists every focus change and what Staypaw did about it.
+
+<br clear="right">
 
 ## The trust contract
 
@@ -53,15 +79,15 @@ Staypaw watches your keyboard, so it has to be easy to trust.
 
 Checked against each project's own docs on 2026-10-21.
 
-| | Staypaw (planned) | [NoFocusSteal](https://github.com/BoazCohenJ/NoFocusSteal) 1.3.2 | [Windhawk mod](https://windhawk.net/mods/prevent-focus-stealing) 1.0.2 | [FocusLogger](https://github.com/JocysCom/FocusLogger) 1.3.12 |
+| | Staypaw 1.0 | [NoFocusSteal](https://github.com/BoazCohenJ/NoFocusSteal) 1.3.2 | [Windhawk mod](https://windhawk.net/mods/prevent-focus-stealing) 1.0.2 | [FocusLogger](https://github.com/JocysCom/FocusLogger) 1.3.12 |
 |---|---|---|---|---|
 | Stops steals | after they happen, then puts focus back | after they happen, then puts focus back | before they happen, for the apps you list | no, it logs them |
 | Injects into other apps | no | no | yes, into every process by default | no |
 | Protects one app while you're idle | yes | Strict mode, for every app at once | you list the stealers instead | no |
 | A key typed during a steal | held, never reaches the stealer | can land in the stealer (up to 1 in 185 keys in its own test) | none land | n/a |
-| Signed, on winget | planned | not signed, not on winget | not checked | signed |
+| Signed, on winget | signed, not on winget yet | not signed, not on winget | not checked | signed |
 
-**Pick NoFocusSteal today:** it works, and Staypaw has no release yet. **Pick the Windhawk mod** if you know which apps steal focus and don't mind injection: it stops a steal before any key lands, which a tool that reacts afterwards can't promise. **Pick FocusLogger** if you only want to know which app it is.
+**Pick NoFocusSteal** if you want every app protected at once: its Strict mode does that. **Pick the Windhawk mod** if you know which apps steal focus and don't mind injection: it stops a steal before any key lands, which a tool that reacts afterwards can't promise. **Pick FocusLogger** if you only want to know which app it is.
 
 ## Contributing
 

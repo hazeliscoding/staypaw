@@ -122,7 +122,7 @@ What the design must protect. Everything else gets ordinary good design.
 - [x] Sign releases with Artifact Signing through OIDC, from a `release` environment that only `v*` tags can deploy to, as in Gil Sweep.
 - [x] Start with Windows, so protection comes back after a restart and after a winget upgrade.
 - [ ] Submit a winget manifest, with Setup's `--silent` for both install modes, as in Prompuff.
-- [ ] A screenshot and a short demo in the README.
+- [x] A screenshot and a short demo in the README.
 
 **Done when:** `winget install hazeliscoding.Staypaw` installs a signed build that starts in the tray from Start, and at every sign-in after.
 
