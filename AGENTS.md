@@ -62,6 +62,7 @@ One meaning per term. Use these words in code, docs and commits.
 - `dotnet run --project tools/Staypaw.Demo -- artifacts/publish/Staypaw.exe docs/screenshots/demo.gif` records the README's demo with ffmpeg on the real desktop: the same typing and steals, without Staypaw and then with it. It types for about 20 seconds, so run it only when the owner isn't typing, with Staypaw quit. Its window is the protected app, whose held keys are dropped as a game's are, so its typing waits out each restore.
 - `dotnet run --project tools/Staypaw.Screenshots -- docs/screenshots` renders the README's welcome and tray menu pictures headlessly, from made-up state, in light and dark. Rerun it when either changes.
 - `.github/workflows/release.yml` builds Setup and the portable zip with `dotnet vpk` (a local tool: `dotnet tool restore`). A `v*` tag makes a draft release; a run by hand builds the files alone.
+- `.github/workflows/winget.yml` sends each published stable release to winget with Komac, once the `WINGET_TOKEN` secret exists.
 - `dotnet run scripts/make-icons.cs` regenerates `docs/brand/staypaw.ico` and `app-icon-256.png` from `app-icon.svg`.
 - `uv run --no-project --with fonttools --with uharfbuzz python -I scripts/make_lockup.py <Fredoka-SemiBold.ttf> docs/brand` rebuilds the lockups. Its header says where to get the font.
 

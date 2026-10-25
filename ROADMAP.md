@@ -65,6 +65,10 @@ What the design must protect. Everything else gets ordinary good design.
 - **No trademark search,** the owner's call. This gives up knowing before 1.0 whether someone else holds the name.
 - **Staypaw starts with Windows,** from the current user's Run key, and winget runs Setup with `--silent` both ways, as in Prompuff. A silent Setup doesn't start Staypaw, and an upgrade stops it without starting it again; without a Run entry, protection stayed off after every upgrade and every restart until you started Staypaw yourself. First launch turns it on, the welcome says so, and the tray menu turns it off. The uninstall hook removes the entry only if it starts this copy, so a portable copy keeps its own. A Defender scan of the exe with the entry and the keyboard hook found no threats (signatures 1.461.184.0). This gives up a `winget install` that starts Staypaw: you start it once from Start, and after an upgrade it's back at the next sign-in. Running Setup without `--silent` would start it, but on an upgrade it waits for a click on Velopack's Update dialog.
 
+## Decisions (2026-10-25)
+
+- **Later versions reach winget through Komac,** from a workflow that runs when a stable release is published, as in Prompuff. Staypaw never updates itself, so winget is how its users get new versions. 1.0.0 went in by hand, since Komac only updates a package winget already has. This gives up a narrow token: Komac needs a classic one with `public_repo`, which can write to all the owner's public repos.
+
 ## M0: Placeholder (as soon as possible)
 
 - [x] Add `LICENSE` (Apache-2.0), `README.md`, `ROADMAP.md` and `AGENTS.md`.
