@@ -121,7 +121,7 @@ What the design must protect. Everything else gets ordinary good design.
 - [x] A Velopack per-user Setup and a portable zip, built by a release workflow.
 - [x] Sign releases with Artifact Signing through OIDC, from a `release` environment that only `v*` tags can deploy to, as in Gil Sweep.
 - [x] Start with Windows, so protection comes back after a restart and after a winget upgrade.
-- [ ] Submit a winget manifest, with Setup's `--silent` for both install modes, as in Prompuff.
+- [x] Submit a winget manifest, with Setup's `--silent` for both install modes, as in Prompuff: [winget-pkgs #461348](https://github.com/microsoft/winget-pkgs/pull/461348).
 - [x] A screenshot and a short demo in the README.
 
 **Done when:** `winget install hazeliscoding.Staypaw` installs a signed build that starts in the tray from Start, and at every sign-in after.
