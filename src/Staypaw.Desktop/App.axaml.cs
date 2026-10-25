@@ -47,8 +47,14 @@ public partial class App : Application
     private void UpdateTray()
     {
         var watcher = _watcher!;
-        var protectedApp = watcher.ProtectedApp;
-        var current = watcher.CurrentApp;
+        var icon = TrayIcon.GetIcons(this)![0];
+        icon.Menu = BuildMenu(watcher.ProtectedApp, watcher.CurrentApp, watcher.LastStealer, watcher.TopStealer, StartWithWindows.IsOn());
+        icon.ToolTipText = watcher.ProtectedApp is null ? "Staypaw" : $"Staypaw: protecting {watcher.ProtectedApp}";
+    }
+
+    // Takes the watcher's state as arguments, so the screenshot tool builds this same menu from made-up state.
+    public NativeMenu BuildMenu(string? protectedApp, string? current, string? lastStealer, (string App, int Steals)? topStealer, bool startWithWindows)
+    {
         var menu = new NativeMenu();
 
         menu.Items.Add(Label(protectedApp is null ? "No app protected" : $"Protecting {protectedApp}"));
@@ -63,13 +69,12 @@ public partial class App : Application
         }
 
         menu.Items.Add(new NativeMenuItemSeparator());
-        menu.Items.Add(Label(watcher.LastStealer is { } last ? $"Last stealer: {last}" : "No steals yet"));
-        if (watcher.TopStealer is { } top)
+        menu.Items.Add(Label(lastStealer is { } last ? $"Last stealer: {last}" : "No steals yet"));
+        if (topStealer is { } top)
         {
             menu.Items.Add(Label($"Top stealer: {top.App} ({top.Steals} {(top.Steals == 1 ? "steal" : "steals")})"));
         }
 
-        var startWithWindows = StartWithWindows.IsOn();
         var startItem = Item("Start with Windows", () =>
         {
             StartWithWindows.Set(!startWithWindows);
@@ -82,10 +87,7 @@ public partial class App : Application
         menu.Items.Add(Item("About Staypaw", ShowAbout));
         menu.Items.Add(new NativeMenuItemSeparator());
         menu.Items.Add(Item("Quit Staypaw", () => _desktop?.Shutdown()));
-
-        var icon = TrayIcon.GetIcons(this)![0];
-        icon.Menu = menu;
-        icon.ToolTipText = protectedApp is null ? "Staypaw" : $"Staypaw: protecting {protectedApp}";
+        return menu;
     }
 
     private void Protect(string? app)
