@@ -63,6 +63,7 @@ What the design must protect. Everything else gets ordinary good design.
 - **Releases are signed in a job of their own.** The build job runs the tests and the build, and every package they load, so it can't get a token. The package job takes the built files and only packs and signs them with vpk. A compromised package could otherwise take the token and sign files of its own with the owner's certificate, unseen in any release. A package that changes the build is still signed with it. This gives up a single job: a release starts a second Windows runner and passes the build between them.
 - **The paw is the logo,** the owner's call. The mark that was a placeholder, a paw holding a window down, stays the logo and the app icon. This gives up a logo picked in a design project.
 - **No trademark search,** the owner's call. This gives up knowing before 1.0 whether someone else holds the name.
+- **Staypaw starts with Windows,** from the current user's Run key, and winget runs Setup with `--silent` both ways, as in Prompuff. A silent Setup doesn't start Staypaw, and an upgrade stops it without starting it again; without a Run entry, protection stayed off after every upgrade and every restart until you started Staypaw yourself. First launch turns it on, the welcome says so, and the tray menu turns it off. The uninstall hook removes the entry only if it starts this copy, so a portable copy keeps its own. A Defender scan of the exe with the entry and the keyboard hook found no threats (signatures 1.461.184.0). This gives up a `winget install` that starts Staypaw: you start it once from Start, and after an upgrade it's back at the next sign-in. Running Setup without `--silent` would start it, but on an upgrade it waits for a click on Velopack's Update dialog.
 
 ## M0: Placeholder (as soon as possible)
 
@@ -119,10 +120,11 @@ What the design must protect. Everything else gets ordinary good design.
 
 - [x] A Velopack per-user Setup and a portable zip, built by a release workflow.
 - [x] Sign releases with Artifact Signing through OIDC, from a `release` environment that only `v*` tags can deploy to, as in Gil Sweep.
-- [ ] Submit a winget manifest. A silent Setup installs without starting Staypaw, and winget runs installers silently.
+- [x] Start with Windows, so protection comes back after a restart and after a winget upgrade.
+- [ ] Submit a winget manifest, with Setup's `--silent` for both install modes, as in Prompuff.
 - [ ] A screenshot and a short demo in the README.
 
-**Done when:** `winget install hazeliscoding.Staypaw` installs a signed build that starts in the tray.
+**Done when:** `winget install hazeliscoding.Staypaw` installs a signed build that starts in the tray from Start, and at every sign-in after.
 
 ## Later
 
