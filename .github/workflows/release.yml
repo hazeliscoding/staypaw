@@ -1,0 +1,104 @@
+name: Release
+
+# A pushed v* tag builds Setup and the portable zip and creates a draft GitHub Release.
+# Run it by hand to build the same files with no release.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to build (nothing is published)
+        required: true
+        default: 0.0.1
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Version
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { $env:INPUT_VERSION }
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') { throw "$version is not a version" }
+          "VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Test
+        run: dotnet test --solution Staypaw.slnx --configuration Release
+
+      - name: Publish
+        run: dotnet publish src/Staypaw.Desktop --configuration Release --runtime win-x64 -warnaserror -p:Version=${{ env.VERSION }} --output artifacts/publish
+
+      # Only Setup: Staypaw has no updater, so no portable bundle (it carries Velopack's updater) and no delta.
+      # Setup empties %LOCALAPPDATA%\<packId> on every install, so the ID must never be Staypaw: that folder holds the log.
+      # Staypaw answers Velopack's hooks without its SDK, which brings in network code, hence --skipVeloAppCheck.
+      - name: Setup
+        shell: pwsh
+        run: |
+          dotnet tool restore
+          dotnet vpk pack --runtime win-x64 --packId hazeliscoding.Staypaw --packVersion ${{ env.VERSION }} --packTitle Staypaw --packAuthors "Hazel Granados" --packDir artifacts/publish --mainExe Staypaw.exe --icon docs/brand/staypaw.ico --shortcuts StartMenuRoot --noPortable --delta None --skipVeloAppCheck --outputDir artifacts/velopack
+          if ($LASTEXITCODE -ne 0) { throw 'vpk pack failed' }
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $out = New-Item -ItemType Directory -Force artifacts/release
+          $stage = New-Item -ItemType Directory -Force artifacts/stage/portable
+          # The app as Setup installs it, from the full package, without Velopack's updater and launch stub.
+          $full = [IO.Compression.ZipFile]::OpenRead("$PWD/artifacts/velopack/hazeliscoding.Staypaw-${{ env.VERSION }}-full.nupkg")
+          foreach ($entry in $full.Entries | Where-Object FullName -match '^lib/app/(Staypaw\.exe|[^/]+\.dll)$') {
+            [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, "$stage/$($entry.Name)")
+          }
+          $full.Dispose()
+          Copy-Item README.md, LICENSE, THIRD-PARTY-NOTICES.md $stage
+          Compress-Archive -Path "$stage/*" -DestinationPath "$out/staypaw-portable-win-x64.zip" -Force
+          Copy-Item artifacts/velopack/hazeliscoding.Staypaw-win-Setup.exe "$out/staypaw-setup-win-x64.exe"
+          $sums = Get-ChildItem "$out/*" -Include *.zip, *.exe | ForEach-Object {
+            "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"
+          }
+          # LF endings, so `sha256sum -c SHA256SUMS` works on any platform.
+          [IO.File]::WriteAllText("$out/SHA256SUMS", ($sums -join "`n") + "`n")
+          Get-Content "$out/SHA256SUMS"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release
+          path: artifacts/release/*
+          if-no-files-found: error
+
+  # The only job with write access. It runs no repository code, only the GitHub CLI.
+  release:
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release
+          path: release
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" release/* \
+            --repo "${{ github.repository }}" \
+            --draft \
+            --title "Staypaw ${{ github.ref_name }}" \
+            --generate-notes
