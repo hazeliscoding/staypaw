@@ -73,6 +73,9 @@ One meaning per term. Use these words in code, docs and commits.
 
 - **Commits:** [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `ci:`, `build:`, `refactor:`). Keep each commit atomic, and use a scope when it adds clarity (`feat(rules): …`).
 - **No AI attribution** in commits or PRs. That means no `Co-Authored-By` trailers, no "Generated with" lines and no session links.
+- **Pull requests:** `main` is protected, so nothing is pushed to it directly. Branch from `main`, named like the commit types (`feat/…`, `fix/…`, `docs/…`), push, and open a pull request with `gh pr create`. It merges once CI's `build` check passes on a branch that's up to date with `main`, by rebase (`gh pr merge --rebase --delete-branch`), so each atomic commit lands as it is. Never bypass the check or force-push `main`.
+- Renaming the `build` job in `ci.yml` means updating the required check in the `main` ruleset in the same change, or every pull request waits for a check that never comes.
+- **Releases:** the version bump goes through a pull request. Once it's merged, tag that commit on `main` and push the tag. `v*` tags can't be moved or deleted.
 - **Checks:** automate acceptance checks instead of handing manual steps to the owner. Give every check that tests for an absence a positive control. For example, the network guard must fail on a deliberate `HttpClient`.
 - **Structural rules get tests.** When a decision is a rule about the code's shape, add a test that fails when it's broken.
 - **Validation:** evidence comes from dogfooding and public signals (issues, downloads). Don't plan interviews, recruiting or outreach.
