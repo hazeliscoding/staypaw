@@ -20,8 +20,13 @@ Windows lets apps pull focus to themselves: a chat popup, an installer, a browse
 | You're… | Something takes focus | Without Staypaw | With Staypaw |
 |---|---|---|---|
 | typing in your editor | a chat popup | your next words go into the chat | focus comes straight back, and the keys you typed land in your editor |
+| typing a password | a background app's window | your password goes into that window, and you have to change it | focus comes straight back, and your password lands where you were typing |
+| coding while an agent tests in a browser | the browser opens a page, every few seconds | the browser keeps jumping in front, and your keys go into it | focus comes back while you type, or every time if your editor is protected |
 | crafting in a game, hands off the keyboard | an agent's browser opens a page | the game loses focus | the game keeps focus, because you protected it |
+| playing a match | a work chat message | the game loses focus mid-match | focus goes back to the game, and keys pressed meanwhile are dropped, never replayed into it |
 | pressing Space | an installer with a Cancel button | the install is cancelled | the key never reaches the installer |
+
+From reports in [PowerToys #65](https://github.com/microsoft/PowerToys/issues/65), [Playwright #41306](https://github.com/microsoft/playwright/issues/41306) and [chrome-devtools-mcp #2856](https://github.com/ChromeDevTools/chrome-devtools-mcp/issues/2856).
 
 ## What it does
 
