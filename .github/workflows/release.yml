@@ -1,14 +1,14 @@
 name: Release
 
-# A pushed v* tag builds Setup and the portable zip and creates a draft GitHub Release.
-# Run it by hand to build the same files with no release.
+# A pushed v* tag builds and signs Setup and the portable zip and creates a draft GitHub Release.
+# Run it by hand to build the same files unsigned, with no release.
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
     inputs:
       version:
-        description: Version to build (nothing is published)
+        description: Version to build (nothing is signed or published)
         required: true
         default: 0.0.1
 
@@ -18,9 +18,16 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    # Tag builds run in the release environment, whose variables let this job sign in to Azure Artifact Signing.
+    # Manual runs have no environment, so they build unsigned.
+    environment: ${{ github.ref_type == 'tag' && 'release' || '' }}
+    permissions:
+      contents: read
+      id-token: write
     env:
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
+      SIGN: ${{ vars.AZURE_CLIENT_ID != '' && vars.ARTIFACT_SIGNING_ENDPOINT != '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -43,6 +50,25 @@ jobs:
       - name: Publish
         run: dotnet publish src/Staypaw.Desktop --configuration Release --runtime win-x64 -warnaserror -p:Version=${{ env.VERSION }} --output artifacts/publish
 
+      - name: Sign in to Azure for code signing
+        if: env.SIGN == 'true'
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Write the Artifact Signing metadata
+        if: env.SIGN == 'true'
+        shell: pwsh
+        env:
+          ENDPOINT: ${{ vars.ARTIFACT_SIGNING_ENDPOINT }}
+          ACCOUNT: ${{ vars.ARTIFACT_SIGNING_ACCOUNT }}
+          PROFILE: ${{ vars.ARTIFACT_SIGNING_PROFILE }}
+        run: |
+          [ordered]@{ Endpoint = $env:ENDPOINT; CodeSigningAccountName = $env:ACCOUNT; CertificateProfileName = $env:PROFILE } |
+            ConvertTo-Json | Out-File -Encoding utf8NoBOM "$env:RUNNER_TEMP/signing.json"
+
       # Only Setup: Staypaw has no updater, so no portable bundle (it carries Velopack's updater) and no delta.
       # Setup empties %LOCALAPPDATA%\<packId> on every install, so the ID must never be Staypaw: that folder holds the log.
       # Staypaw answers Velopack's hooks without its SDK, which brings in network code, hence --skipVeloAppCheck.
@@ -50,7 +76,8 @@ jobs:
         shell: pwsh
         run: |
           dotnet tool restore
-          dotnet vpk pack --runtime win-x64 --packId hazeliscoding.Staypaw --packVersion ${{ env.VERSION }} --packTitle Staypaw --packAuthors "Hazel Granados" --packDir artifacts/publish --mainExe Staypaw.exe --icon docs/brand/staypaw.ico --shortcuts StartMenuRoot --noPortable --delta None --skipVeloAppCheck --outputDir artifacts/velopack
+          $sign = if ($env:SIGN -eq 'true') { '--azureTrustedSignFile', "$env:RUNNER_TEMP/signing.json" } else { @() }
+          dotnet vpk pack --runtime win-x64 --packId hazeliscoding.Staypaw --packVersion ${{ env.VERSION }} --packTitle Staypaw --packAuthors "Hazel Granados" --packDir artifacts/publish --mainExe Staypaw.exe --icon docs/brand/staypaw.ico --shortcuts StartMenuRoot --noPortable --delta None --skipVeloAppCheck --outputDir artifacts/velopack @sign
           if ($LASTEXITCODE -ne 0) { throw 'vpk pack failed' }
 
       - name: Package
@@ -58,7 +85,8 @@ jobs:
         run: |
           $out = New-Item -ItemType Directory -Force artifacts/release
           $stage = New-Item -ItemType Directory -Force artifacts/stage/portable
-          # The app as Setup installs it, from the full package, without Velopack's updater and launch stub.
+          # The app as Setup installs it, from the full package: vpk signs its own copy, not the publish folder.
+          # Velopack's updater and launch stub stay out.
           $full = [IO.Compression.ZipFile]::OpenRead("$PWD/artifacts/velopack/hazeliscoding.Staypaw-${{ env.VERSION }}-full.nupkg")
           foreach ($entry in $full.Entries | Where-Object FullName -match '^lib/app/(Staypaw\.exe|[^/]+\.dll)$') {
             [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, "$stage/$($entry.Name)")
@@ -73,6 +101,17 @@ jobs:
           # LF endings, so `sha256sum -c SHA256SUMS` works on any platform.
           [IO.File]::WriteAllText("$out/SHA256SUMS", ($sums -join "`n") + "`n")
           Get-Content "$out/SHA256SUMS"
+
+      - name: Check the signatures
+        if: env.SIGN == 'true'
+        shell: pwsh
+        run: |
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
+            Where-Object FullName -like '*\x64\*' | Sort-Object FullName -Descending | Select-Object -First 1
+          foreach ($file in 'artifacts/release/staypaw-setup-win-x64.exe', 'artifacts/stage/portable/Staypaw.exe') {
+            & $signtool.FullName verify /pa /v $file
+            if ($LASTEXITCODE -ne 0) { throw "$file isn't signed" }
+          }
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
