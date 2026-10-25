@@ -28,5 +28,10 @@ internal static class Program
     public static AppBuilder BuildAvaloniaApp() =>
         AppBuilder.Configure<App>()
             .UsePlatformDetect()
+            .With(new Win32PlatformOptions
+            {
+                // A menu and one small window don't need the GPU, whose driver keeps its memory once loaded.
+                RenderingMode = [Win32RenderingMode.Software],
+            })
             .LogToTrace();
 }
