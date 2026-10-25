@@ -6,7 +6,7 @@ These are the working rules for agents in this repo. Staypaw is a Windows tray a
 
 - `README.md`: the pitch and the trust contract.
 - `ROADMAP.md`: decisions already made, what shipped, and what is out of scope. Check it before proposing features, and respect those decisions unless the owner reopens them. Record new decisions there, dated, in the same pull request as the change that needs them.
-- GitHub issues hold the open work, one milestone per release, and the [Staypaw project](https://github.com/users/hazeliscoding/projects/12) shows all of it. Work from the open issues in the current milestone, which `ROADMAP.md` names under **Next** (`gh issue list --milestone v1.1.1`), and don't build past it without asking. The commit that finishes an issue closes it with `Closes #N` in its body.
+- GitHub issues hold the open work, one milestone per release, and the [Staypaw project](https://github.com/users/hazeliscoding/projects/12) shows all of it. Work from the open issues in the current milestone, which `ROADMAP.md` names under **Next** (`gh issue list --milestone v1.2`), and don't build past it without asking. The commit that finishes an issue closes it with `Closes #N` in its body.
 - New work gets an issue in the project (`gh issue create --project "Staypaw"`) with a milestone, or the `later` label until it has one. Don't add plan, spec or backlog documents.
 
 ## The trust contract (hard rules)
