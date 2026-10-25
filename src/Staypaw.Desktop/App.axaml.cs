@@ -36,6 +36,7 @@ public partial class App : Application
             UpdateTray();
             if (FirstLaunch())
             {
+                StartWithWindows.Set(true);
                 ShowAbout();
             }
         }
@@ -68,6 +69,15 @@ public partial class App : Application
             menu.Items.Add(Label($"Top stealer: {top.App} ({top.Steals} {(top.Steals == 1 ? "steal" : "steals")})"));
         }
 
+        var startWithWindows = StartWithWindows.IsOn();
+        var startItem = Item("Start with Windows", () =>
+        {
+            StartWithWindows.Set(!startWithWindows);
+            UpdateTray();
+        });
+        startItem.ToggleType = MenuItemToggleType.CheckBox;
+        startItem.IsChecked = startWithWindows;
+        menu.Items.Add(startItem);
         menu.Items.Add(Item("Open the focus log", OpenLog));
         menu.Items.Add(Item("About Staypaw", ShowAbout));
         menu.Items.Add(new NativeMenuItemSeparator());

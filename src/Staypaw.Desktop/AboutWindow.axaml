@@ -22,6 +22,8 @@
       <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource Text1}"
                  Text="When another app takes your keyboard focus, Staypaw puts it back and tells you which app did it." />
       <TextBlock x:Name="Protection" TextWrapping="Wrap" Foreground="{DynamicResource Text1}" />
+      <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource Text1}"
+                 Text="It starts when you sign in to Windows, unless you turn off Start with Windows in the tray menu." />
       <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource Text2}" FontSize="{StaticResource FontCaption}"
                  Text="Nothing injected, no network, and no keys stored." />
       <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
