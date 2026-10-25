@@ -33,8 +33,9 @@ ShowStatus();
 form.Controls.Add(status);
 form.KeyDown += (_, e) =>
 {
-    // 0xE8 is the unused key Staypaw sends a stealer to win back the foreground, never one you typed.
-    if (e.KeyValue != 0xE8)
+    // 0xE8 is the unused key Staypaw sends a stealer to win back the foreground, never one you typed. Alt is this
+    // program's own: when its window is already in front, its fake Alt press reaches it.
+    if (e.KeyValue != 0xE8 && e.KeyCode != Keys.Menu)
     {
         keys++;
         ShowStatus();
