@@ -90,14 +90,14 @@ What the design must protect. Everything else gets ordinary good design.
 |---|---|---|
 | [1.0.0](https://github.com/hazeliscoding/staypaw/releases/tag/v1.0.0) | 2026-10-25 | M0 to M4: a log of every steal, a protected app, held keys, a signed Setup and portable zip, and Start with Windows. |
 | [1.1.0](https://github.com/hazeliscoding/staypaw/releases/tag/v1.1.0) | 2026-10-25 | Updates itself from GitHub Releases, never while the protected app is in front. |
+| [1.1.1](https://github.com/hazeliscoding/staypaw/releases/tag/v1.1.1) | 2026-10-25 | Draws in software, holding 10 MB of private memory instead of 68 MB, and is the first release 1.1 fetched by itself. |
 
 ## Next
 
-The [Staypaw board](https://github.com/users/hazeliscoding/projects/12) shows all open work. The current milestone is [v1.1.1](https://github.com/hazeliscoding/staypaw/milestone/1).
+The [Staypaw board](https://github.com/users/hazeliscoding/projects/12) shows all open work. The current milestone is [v1.2](https://github.com/hazeliscoding/staypaw/milestone/3).
 
 | Milestone | What it brings |
 |---|---|
-| [v1.1.1](https://github.com/hazeliscoding/staypaw/milestone/1) | Proves that 1.1 updates itself: an installed 1.1.0 updates itself to 1.1.1 from GitHub. Tries the software renderer. |
 | [v1.2](https://github.com/hazeliscoding/staypaw/milestone/3) | Pause: stop Staypaw for a while without quitting it, from a hotkey or for a set time. |
 | [v1.3](https://github.com/hazeliscoding/staypaw/milestone/4) | Agents: windows that coding agents and Playwright servers start never take your keyboard. |
 | [v1.4](https://github.com/hazeliscoding/staypaw/milestone/5) | Show, don't take: a window can appear without taking your keyboard. |
