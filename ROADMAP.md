@@ -72,6 +72,7 @@ What the design must protect. Everything else gets ordinary good design.
 - **A restart into an update waits while the protected app is in front,** because nothing guards it for the seconds a restart takes. The update installs at the first focus change away from it, or at the next start. This gives up updating at once during a long game.
 - **Open work moves to GitHub issues and milestones,** the owner's choice, as sdl3-porter did after 1.0. With two releases out, open work is easier to find, follow and comment on as issues, and the [Staypaw board](https://github.com/users/hazeliscoding/projects/12) shows all of it. M5's last item became the v1.1.1 milestone (#2). A Getting found milestone, added on the way, holds the winget install with M4's open "Done when" (#3) and a SmartScreen check (#4). Later became #5 to #12, labelled `later`. The old checklists are in `git show v1.1.0:ROADMAP.md`. This gives up changing the plan in the same pull request as the code, and agents now read it through `gh`.
 - **`main` takes changes only by pull request,** the owner's call, as in Gil Sweep and Prompuff. A ruleset with no bypass refuses direct pushes, force-pushes and deleting `main`, requires CI's `build` check on a branch that's up to date with it, and merges by rebase only, so every commit on `main` has built and tested. This gives up pushing straight to `main`, which every change before this one did.
+- **The 1.x releases go smallest first,** the owner's call: v1.2 pause (#6), v1.3 rules by launcher (#7), v1.4 a window that appears without taking your keyboard (#5). Each release ships something soon, and the hardest design jobs get the most time. The software renderer (#12) joins v1.1.1, so the first release an installed copy fetches by itself carries a real change. Each milestone's open questions are settled as a dated decision before it's built. The elevated mode (#8) stays `later` until the log shows how often admin apps steal, and Calla's art (#9, #10, #11) stays `later` until it's drawn. This gives up the most-reacted ask in PowerToys #65 first: it comes last.
 
 ## Shipped
 
@@ -86,7 +87,10 @@ The [Staypaw board](https://github.com/users/hazeliscoding/projects/12) shows al
 
 | Milestone | What it brings |
 |---|---|
-| [v1.1.1](https://github.com/hazeliscoding/staypaw/milestone/1) | Proves that 1.1 updates itself: an installed 1.1.0 updates itself to 1.1.1 from GitHub. |
+| [v1.1.1](https://github.com/hazeliscoding/staypaw/milestone/1) | Proves that 1.1 updates itself: an installed 1.1.0 updates itself to 1.1.1 from GitHub. Tries the software renderer. |
+| [v1.2](https://github.com/hazeliscoding/staypaw/milestone/3) | Pause: stop Staypaw for a while without quitting it, from a hotkey or for a set time. |
+| [v1.3](https://github.com/hazeliscoding/staypaw/milestone/4) | Agents: windows that coding agents and Playwright servers start never take your keyboard. |
+| [v1.4](https://github.com/hazeliscoding/staypaw/milestone/5) | Show, don't take: a window can appear without taking your keyboard. |
 | [Getting found](https://github.com/hazeliscoding/staypaw/milestone/2) | Staypaw where people look for it, starting with winget. It needs no release. |
 
 Ideas with no milestone yet are labelled [`later`](https://github.com/hazeliscoding/staypaw/issues?q=is%3Aopen+label%3Alater).
