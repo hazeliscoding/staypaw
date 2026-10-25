@@ -92,7 +92,7 @@ Checked against each project's own docs on 2026-10-21.
 
 ## Contributing
 
-Issues are welcome. Planning lives in [ROADMAP.md](ROADMAP.md).
+Issues are welcome. Open work is on the [Staypaw board](https://github.com/users/hazeliscoding/projects/12), and decisions are in [ROADMAP.md](ROADMAP.md).
 
 ## License
 

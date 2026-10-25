@@ -5,8 +5,9 @@ These are the working rules for agents in this repo. Staypaw is a Windows tray a
 ## Sources of truth
 
 - `README.md`: the pitch and the trust contract.
-- `ROADMAP.md`: decisions already made, the milestones, and what is out of scope. Check it before proposing features. Respect those decisions unless the owner reopens them.
-- Work from the next unchecked item in `ROADMAP.md`. Don't build past the current milestone without asking.
+- `ROADMAP.md`: decisions already made, what shipped, and what is out of scope. Check it before proposing features, and respect those decisions unless the owner reopens them. Record new decisions there, dated, in the same pull request as the change that needs them.
+- GitHub issues hold the open work, one milestone per release, and the [Staypaw project](https://github.com/users/hazeliscoding/projects/12) shows all of it. Work from the open issues in the current milestone, which `ROADMAP.md` names under **Next** (`gh issue list --milestone v1.1.1`), and don't build past it without asking. The commit that finishes an issue closes it with `Closes #N` in its body.
+- New work gets an issue in the project (`gh issue create --project "Staypaw"`) with a milestone, or the `later` label until it has one. Don't add plan, spec or backlog documents.
 
 ## The trust contract (hard rules)
 
@@ -75,6 +76,6 @@ One meaning per term. Use these words in code, docs and commits.
 - **Checks:** automate acceptance checks instead of handing manual steps to the owner. Give every check that tests for an absence a positive control. For example, the network guard must fail on a deliberate `HttpClient`.
 - **Structural rules get tests.** When a decision is a rule about the code's shape, add a test that fails when it's broken.
 - **Validation:** evidence comes from dogfooding and public signals (issues, downloads). Don't plan interviews, recruiting or outreach.
-- **Docs:** short and concise. Prefer editing `ROADMAP.md` over creating new planning documents.
+- **Docs:** short and concise.
 - **Code comments:** explain why, not what. Comment only what the code can't say for itself: a non-obvious constraint, a Win32 quirk and its cause, or a line that keeps the trust contract. Don't restate names or types, and don't leave commented-out code.
 - Local Playwright output goes to `.playwright-mcp/`, which git ignores.
