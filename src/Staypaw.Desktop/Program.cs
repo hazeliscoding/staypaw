@@ -9,6 +9,11 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        // Velopack's Setup and uninstaller run Staypaw with --veloapp-install, --veloapp-uninstall and the like,
+        // then wait up to 30 s for it to exit. Velopack's SDK would answer them, but it brings in network code.
+        if (args is [var hook, ..] && hook.StartsWith("--veloapp-", StringComparison.Ordinal))
+            return 0;
+
         // Two copies would fight over every restore, so a second launch just exits.
         using var mutex = new Mutex(true, @"Local\hazeliscoding.Staypaw", out var first);
         return first ? BuildAvaloniaApp().StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown) : 0;
