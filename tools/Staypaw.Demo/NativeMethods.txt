@@ -1,0 +1,9 @@
+DwmGetWindowAttribute
+GetForegroundWindow
+GetWindowRect
+GetWindowThreadProcessId
+keybd_event
+PostThreadMessage
+SendInput
+SetForegroundWindow
+SetWindowPos
