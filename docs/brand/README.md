@@ -1,6 +1,6 @@
 # Staypaw brand
 
-The logo is a placeholder: a paw holding a window down. The real one is an owner item in M0 of the [roadmap](../../ROADMAP.md), to be picked in a claude.ai design project.
+The logo is a paw holding a window down.
 
 - `mark.svg` / `mark-dark.svg`: the paw mark, for light and dark backgrounds.
 - `lockup.svg` / `lockup-dark.svg`: the mark plus the "staypaw" wordmark, as in the README's title.

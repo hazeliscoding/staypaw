@@ -21,7 +21,7 @@ What the design must protect. Everything else gets ordinary good design.
 - **Unelevated by default.** Windows hides input sent to an admin app from normal apps, and won't let a normal app take focus back from one. This gives up protecting admin apps until an elevated mode (Later).
 - **No network code, so no in-app updater.** Updates come through winget and GitHub Releases. This gives up Gil Sweep's update-and-restart.
 - **Never touch a game's process:** no injection, no memory reads and no input sent to it. Held keys aimed at a game are dropped, never replayed, because replayed keys are fake input. This keeps game terms of service and anti-cheat out of play, and gives up delivering keys typed into a game during a steal.
-- **The brand is a placeholder:** a paw holding a window down, in `docs/brand/`. The real logo is an M0 item.
+- **The brand is a placeholder:** a paw holding a window down, in `docs/brand/`. The real logo is an M0 item. *Superseded 2026-10-24: the paw is the logo (below).*
 - **The tray app loads Avalonia's Fluent theme** even with no window, because Windows' tray menu is drawn with Avalonia controls. Without it the menu opened empty and Quit couldn't be clicked. This gives up 6.5 MB of exe size (10.2 to 16.7 MB).
 - **Three verdicts: Yours, Steal and Unclear.** Unclear is a switch right after a click in the window you were in, which may be a link or file you opened. The log counts those, so M2 can settle them with data. This gives up a simple two-way log.
 - **Also yours:** an app whose process started after your last click or deliberate key and took focus within 10 s, a click on the taskbar, Start, search or a notification, and an Alt or Win key within 1.5 s. This gives up catching an app that steals right after you press Alt, which FFXIV's Alt hotbars make common (M2). *Superseded 2026-10-21 for Alt: only Alt+Tab and Alt+Esc count now (below).*
@@ -61,13 +61,15 @@ What the design must protect. Everything else gets ordinary good design.
 - **Setup is Velopack's, without its SDK.** The SDK brings in network code, so Staypaw answers Velopack's hooks itself: it exits at once when Setup or the uninstaller runs it with `--veloapp-install` or the like, which they'd otherwise wait 30 s for and then call a failed install. Setup, and the `Update.exe` that uninstalls Staypaw, still carry Velopack's code for downloading missing runtimes. Staypaw needs none, so they download nothing, and Staypaw never runs them. Releases have no update packages or feed. This gives up Velopack's updates, and an install with no network code anywhere; the portable zip has none.
 - **Velopack's package ID is `hazeliscoding.Staypaw`,** so Setup installs to `%LOCALAPPDATA%\hazeliscoding.Staypaw`. Setup empties that folder on every install and the uninstaller deletes it, and `%LOCALAPPDATA%\Staypaw` holds the log, so an ID of `Staypaw` would wipe the log at every upgrade. The ID matches winget's and the mutex's. The log and the settings stay after an uninstall. This gives up an install folder named plainly Staypaw.
 - **Releases are signed in a job of their own.** The build job runs the tests and the build, and every package they load, so it can't get a token. The package job takes the built files and only packs and signs them with vpk. A compromised package could otherwise take the token and sign files of its own with the owner's certificate, unseen in any release. A package that changes the build is still signed with it. This gives up a single job: a release starts a second Windows runner and passes the build between them.
+- **The paw is the logo,** the owner's call. The mark that was a placeholder, a paw holding a window down, stays the logo and the app icon. This gives up a logo picked in a design project.
+- **No trademark search,** the owner's call. This gives up knowing before 1.0 whether someone else holds the name.
 
 ## M0: Placeholder (as soon as possible)
 
 - [x] Add `LICENSE` (Apache-2.0), `README.md`, `ROADMAP.md` and `AGENTS.md`.
 - [x] Add the placeholder mark to `docs/brand/`.
-- [ ] Search trademarks for Staypaw: USPTO, and EUIPO if it will be sold in Europe. *(owner)*
-- [ ] Pick the real logo in a claude.ai design project, and export `mark.svg` with a `-dark` variant. `scripts/make_lockup.py` rebuilds the lockups from it. *(owner)*
+- [x] ~~Search trademarks for Staypaw: USPTO, and EUIPO if it will be sold in Europe.~~ Skipped, the owner's call (see Decisions).
+- [x] ~~Pick the real logo in a claude.ai design project, and export `mark.svg` with a `-dark` variant.~~ The paw stays the logo (see Decisions).
 - [x] Lockups of the placeholder mark with the wordmark, for light and dark backgrounds.
 - [x] Scaffold `Staypaw.Core`, `Staypaw.Desktop` and `Staypaw.Tests` on .NET 10 and Avalonia 12, with central package versions and warnings as errors.
 - [x] A tray icon made from the mark, with Quit. No window yet.
