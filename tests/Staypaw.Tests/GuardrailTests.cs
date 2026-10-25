@@ -3,8 +3,8 @@ using System.Text.RegularExpressions;
 
 namespace Staypaw.Tests;
 
-/// <summary>Structural rules from AGENTS.md: the core has no UI, nothing uses the network, and every hook stays in
-/// Staypaw's own process.</summary>
+/// <summary>Structural rules from AGENTS.md: the core has no UI and no updater, Staypaw's own code uses no network (the
+/// update check is Velopack's), and every hook stays in Staypaw's own process.</summary>
 public class GuardrailTests
 {
     private static readonly Assembly Core = Assembly.Load("Staypaw.Core");
@@ -34,15 +34,22 @@ public class GuardrailTests
     public void Core_does_not_reference_Avalonia() => Assert.Empty(References(Core, "Avalonia"));
 
     [Fact]
-    public void No_Staypaw_assembly_uses_the_network()
+    public void Staypaws_own_code_uses_no_network()
     {
         Assert.Empty(References(Core, "System.Net"));
         Assert.Empty(References(Desktop, "System.Net"));
     }
 
+    // The watcher, which sees your keys, never even links the code that talks to GitHub.
+    [Fact]
+    public void Core_does_not_reference_Velopack() => Assert.Empty(References(Core, "Velopack"));
+
     // Positive controls: the same check finds the references it exists to catch.
     [Fact]
     public void The_check_finds_Avalonia_in_the_tray_app() => Assert.NotEmpty(References(Desktop, "Avalonia"));
+
+    [Fact]
+    public void The_check_finds_Velopack_in_the_tray_app() => Assert.NotEmpty(References(Desktop, "Velopack"));
 
     [Fact]
     public void The_check_finds_network_references() =>

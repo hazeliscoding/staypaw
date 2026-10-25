@@ -19,7 +19,8 @@ Download `staypaw-setup-win-x64.exe` from the [latest release](https://github.co
 
 SmartScreen may call it an unrecognized app until enough people have run it. Under **More info**, it names Hazel Granados as the publisher: that's the signature on every release.
 
-- **No installer:** unzip `staypaw-portable-win-x64.zip` anywhere and run `Staypaw.exe`. It starts at sign-in from that folder, so turn off Start with Windows in its tray menu before you move or delete it.
+- **Updates:** an installed copy updates itself from GitHub Releases. It restarts into a new version once your protected app isn't in front, and the tray menu turns this off.
+- **No installer:** unzip `staypaw-portable-win-x64.zip` anywhere and run `Staypaw.exe`. It never updates itself. It starts at sign-in from that folder, so turn off Start with Windows in its tray menu before you move or delete it.
 - **Checksums:** each release's `SHA256SUMS` lists both files.
 - **Uninstall:** from Settings › Apps › Installed apps.
 
@@ -54,14 +55,14 @@ From reports in [PowerToys #65](https://github.com/microsoft/PowerToys/issues/65
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/tray-dark.png">
-  <img align="right" width="259" src="docs/screenshots/tray-light.png" alt="Staypaw's tray menu: protecting ffxiv_dx11.exe, last stealer setup.exe, top stealer chrome.exe with 12 steals, Start with Windows ticked, and items to open the focus log, see About and quit.">
+  <img align="right" width="259" src="docs/screenshots/tray-light.png" alt="Staypaw's tray menu: protecting ffxiv_dx11.exe, last stealer setup.exe, top stealer chrome.exe with 12 steals, Start with Windows and Update automatically ticked, and items to open the focus log, see About and quit.">
 </picture>
 
 Right-click the paw in your tray. From there you can:
 
 - protect the app you were just in;
 - see which app took focus last, and which takes it most;
-- turn Start with Windows off or on;
+- turn Start with Windows and automatic updates off or on;
 - open the focus log, which lists every focus change and what Staypaw did about it.
 
 <br clear="right">
@@ -71,7 +72,7 @@ Right-click the paw in your tray. From there you can:
 Staypaw watches your keyboard, so it has to be easy to trust.
 
 - **Nothing injected.** Staypaw never loads code into another app, and never touches a game's process. Its keyboard hook is the low-level kind, which runs inside Staypaw itself.
-- **No network.** There is no networking code, no updater and no telemetry.
+- **No telemetry.** The only network call is the update check, which asks GitHub Releases for a newer version and sends nothing else. The tray menu turns it off. The code that sees your keys can't reach the network: a test fails if it references the updater or any networking code.
 - **No keys stored.** It keeps the time of each keypress, never the key. Keys held during a steal stay in memory for a moment, then go to your window or are dropped. They never go to a game. Nothing about them is written to disk.
 - **Open source,** so you can check all of this instead of trusting it.
 

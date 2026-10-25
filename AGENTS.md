@@ -14,7 +14,7 @@ Staypaw watches the keyboard. People run it only if they can trust it, so never 
 
 - **No code in other processes.** No DLL injection, no `CreateRemoteThread`, no hook DLLs loaded into other apps. Use only out-of-context WinEvent hooks, Raw Input and low-level hooks (`WH_KEYBOARD_LL`, `WH_MOUSE_LL`), which all run in Staypaw's own process. A test fails on any other hook type passed to `SetWindowsHookEx`. Work laptops ban injection, and anti-cheat flags it.
 - **Never touch a game's process.** Identify a window's app with `PROCESS_QUERY_LIMITED_INFORMATION` and nothing more: no memory reads and no input sent to it. Held keys aimed at a game are dropped, never replayed. A game is the protected app, an exe that Windows' Game Bar lists, or an app Staypaw can't name, because anti-cheat can hide even a process's name. Game terms of service forbid tools that read or drive the client, and replayed keys are fake input. One exception, the owner's call: to finish a restore that left no window in front, Staypaw's thread shares the input of your window's thread for about a millisecond, even a game's (see `ROADMAP.md`).
-- **No networking code.** No `HttpClient`, sockets, updater or telemetry, and no package that brings them in. A test fails on any `System.Net` use in Staypaw's assemblies. A keyboard watcher that talks to the network can't be trusted.
+- **The update check is the only network call.** Velopack makes it, from `Updates` in the tray app. No telemetry, crash reports or any other network use, and Staypaw's own code never references a networking assembly. `Staypaw.Core`, which sees your keys, never references Velopack either. Tests fail on both. A keyboard watcher that talks to the network for anything else can't be trusted.
 - **Never record which key was pressed.** The log and memory keep only the time of a keypress. The one exception is held keys (M3): kept in memory until they're delivered or dropped, and never written anywhere. Never trace or log a `HeldKey`; it has no `ToString` beyond its type name for that reason. Anything more makes Staypaw a keylogger.
 - **Run unelevated.** Don't set `requireAdministrator` in the manifest. An elevated mode is a Later item with its own decision.
 - **Code ported from NoFocusSteal keeps its MIT notice** in `THIRD-PARTY-NOTICES.md`. The license requires it.
@@ -26,7 +26,8 @@ Staypaw watches the keyboard. People run it only if they can trust it, so never 
 - Win32 calls go through CsWin32 (`NativeMethods.txt`), not hand-written `DllImport`. The generated code is typed and NativeAOT-safe.
 - NativeAOT must stay free of warnings: no reflection-based serialization. Use source generators.
 - The keyboard hook runs on a thread of its own, and its callback only compares and copies. Every key on the system waits for it, and Windows quietly removes a hook that answers too slowly.
-- Velopack's package ID stays `hazeliscoding.Staypaw`, never `Staypaw`. Setup empties `%LOCALAPPDATA%\<packId>` on every install, and `%LOCALAPPDATA%\Staypaw` holds the log. Don't add Velopack's NuGet package either, because it brings in network code: `Main` answers Velopack's `--veloapp-*` hooks itself.
+- Velopack's package ID stays `hazeliscoding.Staypaw`, never `Staypaw`. Setup empties `%LOCALAPPDATA%\<packId>` on every install, and `%LOCALAPPDATA%\Staypaw` holds the log.
+- Never restart into an update while the protected app is in front: nothing guards it during the restart. `UpdateGate` holds a downloaded update until you leave it.
 
 ## Brand
 
@@ -38,7 +39,7 @@ Staypaw watches the keyboard. People run it only if they can trust it, so never 
 - **A special-purpose library** (a parser, an installer framework): add it yourself, with its reason in the commit message.
 - **A general-purpose helper:** only after checking that nothing in the project already does the job.
 - **A framework:** never without asking the owner.
-- **Anything that brings in network code:** never. See the trust contract.
+- **Anything that brings in network code:** never, beyond Velopack for the update check. See the trust contract.
 
 ## Glossary
 
@@ -63,6 +64,7 @@ One meaning per term. Use these words in code, docs and commits.
 - `dotnet run --project tools/Staypaw.Screenshots -- docs/screenshots` renders the README's welcome and tray menu pictures headlessly, from made-up state, in light and dark. Rerun it when either changes.
 - `.github/workflows/release.yml` builds Setup and the portable zip with `dotnet vpk` (a local tool: `dotnet tool restore`). A `v*` tag makes a draft release; a run by hand builds the files alone.
 - `.github/workflows/winget.yml` sends each published stable release to winget with Komac, once the `WINGET_TOKEN` secret exists.
+- To try an update locally: publish twice, and `dotnet vpk pack` two versions into one scratch folder with `release.yml`'s arguments but a test `--packId`, such as `hazeliscoding.Staypaw.UpdateTest`, so an installed Staypaw is never touched. Keep the first version's Setup from before the second pack. Quit Staypaw, since only one runs at a time. Install the test Setup with `--silent`, then start its `current\Staypaw.exe` with `STAYPAW_UPDATE_SOURCE` set to that folder: about a minute later it updates itself. Its `Update.exe --uninstall --silent` removes it.
 - `dotnet run scripts/make-icons.cs` regenerates `docs/brand/staypaw.ico` and `app-icon-256.png` from `app-icon.svg`.
 - `uv run --no-project --with fonttools --with uharfbuzz python -I scripts/make_lockup.py <Fredoka-SemiBold.ttf> docs/brand` rebuilds the lockups. Its header says where to get the font.
 

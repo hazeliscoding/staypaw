@@ -31,7 +31,7 @@ session.Dispatch(() =>
         Save(welcome, border, Path.Combine(output.FullName, $"welcome-{name}.png"));
         welcome.Close();
 
-        var menu = ((App)Application.Current).BuildMenu("ffxiv_dx11.exe", "ffxiv_dx11.exe", "setup.exe", ("chrome.exe", 12), startWithWindows: true);
+        var menu = ((App)Application.Current).BuildMenu("ffxiv_dx11.exe", "ffxiv_dx11.exe", "setup.exe", ("chrome.exe", 12), startWithWindows: true, updateAutomatically: true);
         var tray = new Window
         {
             SizeToContent = SizeToContent.WidthAndHeight,

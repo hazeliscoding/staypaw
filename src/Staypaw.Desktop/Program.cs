@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Velopack;
 
 namespace Staypaw.Desktop;
 
@@ -9,14 +10,14 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
-        // Velopack's Setup and uninstaller run Staypaw with --veloapp-install, --veloapp-uninstall and the like,
-        // then wait up to 30 s for it to exit. Velopack's SDK would answer them, but it brings in network code.
-        if (args is [var hook, ..] && hook.StartsWith("--veloapp-", StringComparison.Ordinal))
+        // Setup and the uninstaller start an installed copy with their own arguments; Velopack handles those and
+        // exits. It also installs an update that was downloaded before the last exit.
+        if (Updates.IsInstalled)
         {
-            // Otherwise Windows would try to start a deleted exe at every sign-in.
-            if (hook == "--veloapp-uninstall")
-                StartWithWindows.Set(false);
-            return 0;
+            VelopackApp.Build()
+                // Otherwise Windows would try to start a deleted exe at every sign-in.
+                .OnBeforeUninstallFastCallback(_ => StartWithWindows.Set(false))
+                .Run();
         }
 
         // Two copies would fight over every restore, so a second launch just exits.

@@ -25,7 +25,7 @@
       <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource Text1}"
                  Text="It starts when you sign in to Windows, unless you turn off Start with Windows in the tray menu." />
       <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource Text2}" FontSize="{StaticResource FontCaption}"
-                 Text="Nothing injected, no network, and no keys stored." />
+                 Text="Nothing injected, no telemetry, and no keys stored." />
       <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
         <TextBlock x:Name="Version" VerticalAlignment="Center"
                    Foreground="{DynamicResource Text2}" FontSize="{StaticResource FontCaption}" />

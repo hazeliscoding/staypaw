@@ -7,7 +7,7 @@ Staypaw is a Windows tray app that stops other apps from taking your keyboard fo
 What the design must protect. Everything else gets ordinary good design.
 
 1. **Speed.** Focus comes back before you notice, and no key you type during a steal reaches the stealer.
-2. **Trust.** Staypaw watches the keyboard, so nothing is injected, nothing goes over the network, no key is stored, and builds are signed.
+2. **Trust.** Staypaw watches the keyboard, so nothing is injected, nothing goes over the network but the update check, no key is stored, and builds are signed.
 3. **Footprint.** It idles all day beside a game, so it uses close to no CPU and little memory while nothing happens.
 
 ## Decisions (2026-10-21)
@@ -19,7 +19,7 @@ What the design must protect. Everything else gets ordinary good design.
 - **Port NoFocusSteal's watcher, write our own rules.** The WinEvent hooks, the 15 ms foreground poll, the Raw Input timestamps that ignore injected input, and the `AttachThreadInput` restore come from NoFocusSteal at `279e9cd` (MIT), with its notice kept in `THIRD-PARTY-NOTICES.md`. The rules are new, because protecting a picked app and closing the 1.5 s window change them. This gives up a codebase with no third-party notices.
 - **A switch counts only if you made it:** to the window you clicked, the one you Alt+Tabbed to, or one you opened from the taskbar or Start. There's no grace period after a keypress. NoFocusSteal lets any app take focus for 1.5 s after Enter, Tab, Esc or an F-key, and those keys are constant in coding and in games. This gives up a simpler rule: a link or file your click opens in another app needs its own case (M2).
 - **Unelevated by default.** Windows hides input sent to an admin app from normal apps, and won't let a normal app take focus back from one. This gives up protecting admin apps until an elevated mode (Later).
-- **No network code, so no in-app updater.** Updates come through winget and GitHub Releases. This gives up Gil Sweep's update-and-restart.
+- **No network code, so no in-app updater.** Updates come through winget and GitHub Releases. This gives up Gil Sweep's update-and-restart. *Superseded 2026-10-25: Staypaw updates itself, as Sweepling does (below).*
 - **Never touch a game's process:** no injection, no memory reads and no input sent to it. Held keys aimed at a game are dropped, never replayed, because replayed keys are fake input. This keeps game terms of service and anti-cheat out of play, and gives up delivering keys typed into a game during a steal.
 - **The brand is a placeholder:** a paw holding a window down, in `docs/brand/`. The real logo is an M0 item. *Superseded 2026-10-24: the paw is the logo (below).*
 - **The tray app loads Avalonia's Fluent theme** even with no window, because Windows' tray menu is drawn with Avalonia controls. Without it the menu opened empty and Quit couldn't be clicked. This gives up 6.5 MB of exe size (10.2 to 16.7 MB).
@@ -58,7 +58,7 @@ What the design must protect. Everything else gets ordinary good design.
 - **A restore calls `SetForegroundWindow` alone, without NoFocusSteal's `BringWindowToTop`.** Its extra activation could leave no window in front: in a steal test that typed without pause, about 40 of 1,000 keys reached no window, and each steal logged two `Restored` rows and counted twice toward the fight limit. `SetForegroundWindow` raises the window anyway. This gives up NoFocusSteal's exact restore.
 - **A restore that leaves no window in front is finished from your window's thread.** After a steal, `SetForegroundWindow` can return true and still leave no window in front, for good: your keys go nowhere and the stealer can't even steal again. A plain retry never fixed it. While it lasts, for up to 500 ms, the 15 ms check retries with Staypaw's thread sharing the input of your window's thread (`AttachThreadInput`), which finished 17 of 17 such restores. It's the one time Staypaw shares a game's input state: for about a millisecond, with no process handle, no memory read and no input sent. A hung window is skipped, since it would hang Staypaw too. This gives up keeping Staypaw's input apart from a protected game's at all times.
 - **Keys already in your window when a stealer takes focus can't be held.** A stealer that joins your window's input with `AttachThreadInput` and then takes focus gets the keys your window hasn't read yet, or they're lost when it lets go. The hook let them through rightly, because your window had focus: tagged keys put each one 0–3 ms before the steal. So the key test goes quiet for 30 ms before each steal it asks for, and checks the keys typed after it. This gives up keys typed in the last milliseconds before a steal, and a test of them.
-- **Setup is Velopack's, without its SDK.** The SDK brings in network code, so Staypaw answers Velopack's hooks itself: it exits at once when Setup or the uninstaller runs it with `--veloapp-install` or the like, which they'd otherwise wait 30 s for and then call a failed install. Setup, and the `Update.exe` that uninstalls Staypaw, still carry Velopack's code for downloading missing runtimes. Staypaw needs none, so they download nothing, and Staypaw never runs them. Releases have no update packages or feed. This gives up Velopack's updates, and an install with no network code anywhere; the portable zip has none.
+- **Setup is Velopack's, without its SDK.** The SDK brings in network code, so Staypaw answers Velopack's hooks itself: it exits at once when Setup or the uninstaller runs it with `--veloapp-install` or the like, which they'd otherwise wait 30 s for and then call a failed install. Setup, and the `Update.exe` that uninstalls Staypaw, still carry Velopack's code for downloading missing runtimes. Staypaw needs none, so they download nothing, and Staypaw never runs them. Releases have no update packages or feed. This gives up Velopack's updates, and an install with no network code anywhere; the portable zip has none. *Superseded 2026-10-25: Staypaw uses Velopack's SDK for its updates, and the SDK answers the hooks.*
 - **Velopack's package ID is `hazeliscoding.Staypaw`,** so Setup installs to `%LOCALAPPDATA%\hazeliscoding.Staypaw`. Setup empties that folder on every install and the uninstaller deletes it, and `%LOCALAPPDATA%\Staypaw` holds the log, so an ID of `Staypaw` would wipe the log at every upgrade. The ID matches winget's and the mutex's. The log and the settings stay after an uninstall. This gives up an install folder named plainly Staypaw.
 - **Releases are signed in a job of their own.** The build job runs the tests and the build, and every package they load, so it can't get a token. The package job takes the built files and only packs and signs them with vpk. A compromised package could otherwise take the token and sign files of its own with the owner's certificate, unseen in any release. A package that changes the build is still signed with it. This gives up a single job: a release starts a second Windows runner and passes the build between them.
 - **The paw is the logo,** the owner's call. The mark that was a placeholder, a paw holding a window down, stays the logo and the app icon. This gives up a logo picked in a design project.
@@ -67,7 +67,9 @@ What the design must protect. Everything else gets ordinary good design.
 
 ## Decisions (2026-10-25)
 
-- **Later versions reach winget through Komac,** from a workflow that runs when a stable release is published, as in Prompuff. Staypaw never updates itself, so winget is how its users get new versions. 1.0.0 went in by hand, since Komac only updates a package winget already has. This gives up a narrow token: Komac needs a classic one with `public_repo`, which can write to all the owner's public repos.
+- **Later versions reach winget through Komac,** from a workflow that runs when a stable release is published, as in Prompuff. Staypaw never updates itself, so winget is how its users get new versions. 1.0.0 went in by hand, since Komac only updates a package winget already has. This gives up a narrow token: Komac needs a classic one with `public_repo`, which can write to all the owner's public repos. *From 1.1, Staypaw also updates itself; winget still serves new installs, 1.0 and copies with updates off.*
+- **Staypaw updates itself, as Sweepling does,** the owner's call, reopening "no in-app updater". Velopack checks GitHub Releases a minute after start and every 4 hours, downloads in the background and restarts into the update. "Update automatically" in the tray menu turns it off. Only a copy installed with Setup checks: the portable zip and a build from source never do. The check is the only network call. Staypaw's own code still references no networking assembly, and `Staypaw.Core`, which sees your keys, doesn't reference Velopack; tests fail on either. This gives up "nothing goes over the network", the trust contract's plainest promise, and puts Velopack's HTTP code in the process that holds the keyboard hook. It also costs footprint: the exe grew from 17.9 to 24.0 MB, and an installed copy that has checked GitHub idles at 49.6 MB working set and 17.1 MB private with 15 threads, against 40.1 MB, 13.9 MB and 7 for 1.0.
+- **A restart into an update waits while the protected app is in front,** because nothing guards it for the seconds a restart takes. The update installs at the first focus change away from it, or at the next start. This gives up updating at once during a long game.
 
 ## M0: Placeholder (as soon as possible)
 
@@ -130,6 +132,17 @@ What the design must protect. Everything else gets ordinary good design.
 
 **Done when:** `winget install hazeliscoding.Staypaw` installs a signed build that starts in the tray from Start, and at every sign-in after.
 
+## M5: 1.1, updates itself
+
+- [x] Velopack's updates, as in Sweepling: a check a minute after start and every 4 hours, a download in the background, and an "Update automatically" tick in the tray menu.
+- [x] Never restart into an update while the protected app is in front.
+- [x] Releases carry the update packages and the feed, with a delta from the previous release.
+- [ ] Release 1.1.0, then a later version that an installed 1.1.0 updates itself to.
+
+**Done when:** an installed 1.1.0 updates itself to the next release from GitHub, signed, with one Staypaw running afterwards and its sign-in entry kept.
+
+A local, unsigned run on 2026-10-25, under a test package ID: an installed 1.1.0 found 1.1.1 in a scratch feed a minute after it started and was running it 5 s later, as one Staypaw, with Velopack's updater gone. Restarted against GitHub, whose latest release had no feed, it stayed on 1.1.1. Uninstalling removed its folder and uninstall entry.
+
 ## Later
 
 - Let a window appear without taking your keyboard (the most-reacted ask in PowerToys #65).
@@ -146,7 +159,7 @@ What the design must protect. Everything else gets ordinary good design.
 - **DLL injection or hooking other apps' APIs.** It breaks the trust contract, work laptops ban it, and anti-cheat flags it.
 - **Anything that touches a game's process.** Game terms of service.
 - **Reading controller input.** Protecting an app covers idle and controller play without it.
-- **Network code:** an updater, telemetry or crash reporting.
+- **Network code beyond the update check:** telemetry or crash reporting.
 
 ## How we'll know it works
 

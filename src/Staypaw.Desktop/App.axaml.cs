@@ -17,6 +17,9 @@ public partial class App : Application
     // The welcome shows once, on first launch; deleting this file shows it again.
     private static readonly string WelcomedFile = Path.Combine(DataFolder, "welcomed");
 
+    // Updates are on unless this file exists.
+    private static readonly string UpdatesOffFile = Path.Combine(DataFolder, "updates-off");
+
     private FocusWatcher? _watcher;
     private IClassicDesktopStyleApplicationLifetime? _desktop;
     private AboutWindow? _about;
@@ -34,6 +37,11 @@ public partial class App : Application
             _watcher.Changed += (_, _) => UpdateTray();
             _watcher.Start();
             UpdateTray();
+            if (Updates.IsInstalled)
+            {
+                StartUpdates(desktop);
+            }
+
             if (FirstLaunch())
             {
                 StartWithWindows.Set(true);
@@ -48,12 +56,15 @@ public partial class App : Application
     {
         var watcher = _watcher!;
         var icon = TrayIcon.GetIcons(this)![0];
-        icon.Menu = BuildMenu(watcher.ProtectedApp, watcher.CurrentApp, watcher.LastStealer, watcher.TopStealer, StartWithWindows.IsOn());
+        icon.Menu = BuildMenu(watcher.ProtectedApp, watcher.CurrentApp, watcher.LastStealer, watcher.TopStealer, StartWithWindows.IsOn(),
+            Updates.IsInstalled ? UpdateAutomatically() : null);
         icon.ToolTipText = watcher.ProtectedApp is null ? "Staypaw" : $"Staypaw: protecting {watcher.ProtectedApp}";
     }
 
     // Takes the watcher's state as arguments, so the screenshot tool builds this same menu from made-up state.
-    public NativeMenu BuildMenu(string? protectedApp, string? current, string? lastStealer, (string App, int Steals)? topStealer, bool startWithWindows)
+    // updateAutomatically is null for a copy that can't update itself.
+    public NativeMenu BuildMenu(string? protectedApp, string? current, string? lastStealer, (string App, int Steals)? topStealer, bool startWithWindows,
+        bool? updateAutomatically)
     {
         var menu = new NativeMenu();
 
@@ -75,14 +86,20 @@ public partial class App : Application
             menu.Items.Add(Label($"Top stealer: {top.App} ({top.Steals} {(top.Steals == 1 ? "steal" : "steals")})"));
         }
 
-        var startItem = Item("Start with Windows", () =>
+        menu.Items.Add(Toggle("Start with Windows", startWithWindows, () =>
         {
             StartWithWindows.Set(!startWithWindows);
             UpdateTray();
-        });
-        startItem.ToggleType = MenuItemToggleType.CheckBox;
-        startItem.IsChecked = startWithWindows;
-        menu.Items.Add(startItem);
+        }));
+        if (updateAutomatically is { } update)
+        {
+            menu.Items.Add(Toggle("Update automatically", update, () =>
+            {
+                SetUpdateAutomatically(!update);
+                UpdateTray();
+            }));
+        }
+
         menu.Items.Add(Item("Open the focus log", OpenLog));
         menu.Items.Add(Item("About Staypaw", ShowAbout));
         menu.Items.Add(new NativeMenuItemSeparator());
@@ -105,6 +122,55 @@ public partial class App : Application
         }
 
         UpdateTray();
+    }
+
+    private void StartUpdates(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        var watcher = _watcher!;
+        var updates = new Updates(UpdateAutomatically, SynchronizationContext.Current!);
+        var gate = new UpdateGate(
+            () => watcher.ProtectedApp is { } app && app.Equals(watcher.CurrentApp, StringComparison.OrdinalIgnoreCase),
+            () =>
+            {
+                try
+                {
+                    updates.InstallAfterExit();
+                }
+                catch (Exception ex)
+                {
+                    // The updater didn't start: keep running, and the update installs at the next start.
+                    Trace.WriteLine("Staypaw: couldn't start the updater: " + ex.Message);
+                    return;
+                }
+
+                desktop.Shutdown();
+            });
+        watcher.Changed += (_, _) => gate.FocusChanged();
+        updates.Downloaded += gate.Downloaded;
+        desktop.Exit += (_, _) => updates.Dispose();
+        updates.Start();
+    }
+
+    private static bool UpdateAutomatically() => !File.Exists(UpdatesOffFile);
+
+    private static void SetUpdateAutomatically(bool on)
+    {
+        try
+        {
+            if (on)
+            {
+                File.Delete(UpdatesOffFile);
+            }
+            else
+            {
+                Directory.CreateDirectory(DataFolder);
+                File.WriteAllText(UpdatesOffFile, "");
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Trace.WriteLine("Staypaw: couldn't change automatic updates: " + ex.Message);
+        }
     }
 
     private static string? LoadProtectedApp()
@@ -170,6 +236,14 @@ public partial class App : Application
     {
         var item = new NativeMenuItem(Literal(text));
         item.Click += (_, _) => action();
+        return item;
+    }
+
+    private static NativeMenuItem Toggle(string text, bool on, Action action)
+    {
+        var item = Item(text, action);
+        item.ToggleType = MenuItemToggleType.CheckBox;
+        item.IsChecked = on;
         return item;
     }
 
