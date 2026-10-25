@@ -1,6 +1,6 @@
 # Roadmap
 
-Staypaw is a Windows tray app that stops other apps from taking your keyboard focus. This file tracks the decisions already made, what gets built in what order, and what's out of scope.
+Staypaw is a Windows tray app that stops other apps from taking your keyboard focus. This file holds the decisions already made, what shipped and what's out of scope. Open work is in GitHub issues; **Next** says where.
 
 ## Architecture characteristics
 
@@ -70,89 +70,25 @@ What the design must protect. Everything else gets ordinary good design.
 - **Later versions reach winget through Komac,** from a workflow that runs when a stable release is published, as in Prompuff. Staypaw never updates itself, so winget is how its users get new versions. 1.0.0 went in by hand, since Komac only updates a package winget already has. This gives up a narrow token: Komac needs a classic one with `public_repo`, which can write to all the owner's public repos. *From 1.1, Staypaw also updates itself; winget still serves new installs, 1.0 and copies with updates off.*
 - **Staypaw updates itself, as Sweepling does,** the owner's call, reopening "no in-app updater". Velopack checks GitHub Releases a minute after start and every 4 hours, downloads in the background and restarts into the update. "Update automatically" in the tray menu turns it off. Only a copy installed with Setup checks: the portable zip and a build from source never do. The check is the only network call. Staypaw's own code still references no networking assembly, and `Staypaw.Core`, which sees your keys, doesn't reference Velopack; tests fail on either. This gives up "nothing goes over the network", the trust contract's plainest promise, and puts Velopack's HTTP code in the process that holds the keyboard hook. It also costs footprint: the exe grew from 17.9 to 24.0 MB, and an installed copy that has checked GitHub idles at 49.6 MB working set and 17.1 MB private with 15 threads, against 40.1 MB, 13.9 MB and 7 for 1.0.
 - **A restart into an update waits while the protected app is in front,** because nothing guards it for the seconds a restart takes. The update installs at the first focus change away from it, or at the next start. This gives up updating at once during a long game.
+- **Open work moves to GitHub issues and milestones,** the owner's choice, as sdl3-porter did after 1.0. With two releases out, open work is easier to find, follow and comment on as issues, and the [Staypaw board](https://github.com/users/hazeliscoding/projects/12) shows all of it. M5's last item became the v1.1.1 milestone (#2). A Getting found milestone, added on the way, holds the winget install with M4's open "Done when" (#3) and a SmartScreen check (#4). Later became #5 to #12, labelled `later`. The old checklists are in `git show v1.1.0:ROADMAP.md`. This gives up changing the plan in the same pull request as the code, and agents now read it through `gh`.
 
-## M0: Placeholder (as soon as possible)
+## Shipped
 
-- [x] Add `LICENSE` (Apache-2.0), `README.md`, `ROADMAP.md` and `AGENTS.md`.
-- [x] Add the placeholder mark to `docs/brand/`.
-- [x] ~~Search trademarks for Staypaw: USPTO, and EUIPO if it will be sold in Europe.~~ Skipped, the owner's call (see Decisions).
-- [x] ~~Pick the real logo in a claude.ai design project, and export `mark.svg` with a `-dark` variant.~~ The paw stays the logo (see Decisions).
-- [x] Lockups of the placeholder mark with the wordmark, for light and dark backgrounds.
-- [x] Scaffold `Staypaw.Core`, `Staypaw.Desktop` and `Staypaw.Tests` on .NET 10 and Avalonia 12, with central package versions and warnings as errors.
-- [x] A tray icon made from the mark, with Quit. No window yet.
-- [x] Design tokens: a spacing scale, a type scale, a palette with shades and a few shadow levels.
-- [x] NativeAOT publish for `win-x64` with no trim or AOT warnings.
-- [x] Guardrail tests, each with a positive control: `Staypaw.Core` doesn't reference Avalonia, and no Staypaw assembly uses `System.Net`. A deliberate `HttpClient` in Core failed the network test.
-- [x] CI on Windows: build, test, and secret scanning with the gitleaks release binary, checked against its published checksum and run with `--log-opts="--full-history HEAD"`.
+| Version | Released | What it brought |
+|---|---|---|
+| [1.0.0](https://github.com/hazeliscoding/staypaw/releases/tag/v1.0.0) | 2026-10-25 | M0 to M4: a log of every steal, a protected app, held keys, a signed Setup and portable zip, and Start with Windows. |
+| [1.1.0](https://github.com/hazeliscoding/staypaw/releases/tag/v1.1.0) | 2026-10-25 | Updates itself from GitHub Releases, never while the protected app is in front. |
 
-**Done when:** CI is green on `main`, and `dotnet publish -r win-x64` gives a native exe that starts in the tray.
+## Next
 
-## M1: Watch and log
+The [Staypaw board](https://github.com/users/hazeliscoding/projects/12) shows all open work. The current milestone is [v1.1.1](https://github.com/hazeliscoding/staypaw/milestone/1).
 
-- [x] Port the watcher from NoFocusSteal `279e9cd` into `Staypaw.Core`, with its MIT notice in `THIRD-PARTY-NOTICES.md`.
-- [x] Log every focus change to `%LOCALAPPDATA%\Staypaw\focus-log.csv` with NoFocusSteal's columns, so logs from both tools can be compared.
-- [x] Port NoFocusSteal's steal test as a dev tool: a window that grabs focus on a timer and counts the keys it receives.
-- [x] Measure idle CPU and working set, and record them here. The native build, idle for 60 s on 2026-10-21: 234 ms of CPU (0.4% of one core), a 41 MB working set and 66 MB private.
+| Milestone | What it brings |
+|---|---|
+| [v1.1.1](https://github.com/hazeliscoding/staypaw/milestone/1) | Proves that 1.1 updates itself: an installed 1.1.0 updates itself to 1.1.1 from GitHub. |
+| [Getting found](https://github.com/hazeliscoding/staypaw/milestone/2) | Staypaw where people look for it, starting with winget. It needs no release. |
 
-**Done when:** a scripted steal shows up as a log row, the classification is covered by tests, and the idle numbers are recorded.
-
-**Done 2026-10-21:** the native build logged the steal tool as `Steal` ("no click or switch asked for it"), and `StealTests` passes against the real desktop (`Staypaw.Tests.exe -explicit only`). `ClassifierTests` covers each rule.
-
-## M2: Protect
-
-- [x] Run one copy at a time, since two would fight over every restore.
-- [x] Pick a protected app from the tray.
-- [x] Undo a focus change away from the protected app, or from the window you're typing in, unless you made the switch.
-- [x] Decide how a link or file your click opens in another app gets focus. Decided without log data (see Decisions).
-- [x] Narrow the Alt and Win allowance, since FFXIV's hotbars use Alt with the number keys.
-- [x] Put focus back and flash the stealer's taskbar button.
-- [x] Show the last stealer and the top stealer in the tray menu, and open the log from there.
-
-**Done when:** a scripted steal against a protected window is undone, a switch to the window you clicked is allowed, and tests cover both, plus a steal right after a keypress.
-
-**Done 2026-10-21:** `StealTests` restored a scripted steal from the protected app on the real desktop: a `Restored` row, with the original window back in front. `ClassifierTests` covers the clicked switch, the steal right after a keypress, links and repeat stealers. `InputTrackerTests` covers the switch keys. In the native build, a second copy exited on its own, and Protect, Stop protecting and Quit worked from the tray menu.
-
-## M3: Hold stray keys
-
-- [x] A `WH_KEYBOARD_LL` hook in Staypaw's own process that holds keys typed between a steal and the restore.
-- [x] Deliver held keys to your window after the restore, and drop them when that window is a protected game.
-- [x] Scan the published exe with Microsoft Defender, since a global keyboard hook can look like a keylogger.
-
-**Done when:** the steal test counts 0 keys reaching the stealer, and a Defender scan of the published exe is clean.
-
-**Done 2026-10-24:** `StealTests` passed three runs in a row on the real desktop. In each, 45 keys typed during 15 steals were held and replayed, the stealer got none, and your window got all 120. With key holding turned off, the stealer got 36 and the test failed. A Defender custom scan of the published exe (signatures 1.461.184.0) found no threats. The exe is 17,896,448 bytes, 29 KB more than before M3. Idle in the tray, a build from before the last fixes used 40.8 MB working set and 65.1 MB private, against 40.9 and 64.4 before M3. `GuardrailTests` fails on any hook that isn't low-level; a deliberate `WH_KEYBOARD` failed it.
-
-## M4: 1.0
-
-- [x] A Velopack per-user Setup and a portable zip, built by a release workflow.
-- [x] Sign releases with Artifact Signing through OIDC, from a `release` environment that only `v*` tags can deploy to, as in Gil Sweep.
-- [x] Start with Windows, so protection comes back after a restart and after a winget upgrade.
-- [x] Submit a winget manifest, with Setup's `--silent` for both install modes, as in Prompuff: [winget-pkgs #461348](https://github.com/microsoft/winget-pkgs/pull/461348).
-- [x] A screenshot and a short demo in the README.
-
-**Done when:** `winget install hazeliscoding.Staypaw` installs a signed build that starts in the tray from Start, and at every sign-in after.
-
-## M5: 1.1, updates itself
-
-- [x] Velopack's updates, as in Sweepling: a check a minute after start and every 4 hours, a download in the background, and an "Update automatically" tick in the tray menu.
-- [x] Never restart into an update while the protected app is in front.
-- [x] Releases carry the update packages and the feed, with a delta from the previous release.
-- [ ] Release 1.1.0, then a later version that an installed 1.1.0 updates itself to.
-
-**Done when:** an installed 1.1.0 updates itself to the next release from GitHub, signed, with one Staypaw running afterwards and its sign-in entry kept.
-
-A local, unsigned run on 2026-10-25, under a test package ID: an installed 1.1.0 found 1.1.1 in a scratch feed a minute after it started and was running it 5 s later, as one Staypaw, with Velopack's updater gone. Restarted against GitHub, whose latest release had no feed, it stayed on 1.1.1. Uninstalling removed its folder and uninstall entry.
-
-## Later
-
-- Let a window appear without taking your keyboard (the most-reacted ask in PowerToys #65).
-- A pause hotkey and a timed pause.
-- Rules by launcher: windows started by a coding agent or a Playwright server never get focus. Today's tools can only match by exe name, so an agent's Chromium and your own Chrome look the same.
-- An elevated mode that can protect admin apps.
-- Calla's stay-put sticker beside "Before and after", once its see-through gaps are filled in anime-pipeline.
-- Calla's keys-held and on-guard stickers and her night-watch outfit, drawn in anime-pipeline. On-guard would be the README hero.
-- Hand-drawn Calla art by [@wrenishacking](https://github.com/wrenishacking), on the way. Agree its license with the artist before it goes in, since the AI-drawn stickers are Apache-2.0 like the code.
-- Try Avalonia's software renderer for the tray menu and the window: the default renderer keeps about 21 MB once either first opens.
+Ideas with no milestone yet are labelled [`later`](https://github.com/hazeliscoding/staypaw/issues?q=is%3Aopen+label%3Alater).
 
 ## Not planned
 
