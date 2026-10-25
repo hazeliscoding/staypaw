@@ -118,7 +118,7 @@ What the design must protect. Everything else gets ordinary good design.
 ## M4: 1.0
 
 - [x] A Velopack per-user Setup and a portable zip, built by a release workflow.
-- [ ] Sign releases with Artifact Signing through OIDC, from a `release` environment that only `v*` tags can deploy to, as in Gil Sweep.
+- [x] Sign releases with Artifact Signing through OIDC, from a `release` environment that only `v*` tags can deploy to, as in Gil Sweep.
 - [ ] Submit a winget manifest. A silent Setup installs without starting Staypaw, and winget runs installers silently.
 - [ ] A screenshot and a short demo in the README.
 
