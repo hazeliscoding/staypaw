@@ -26,6 +26,7 @@ Staypaw watches the keyboard. People run it only if they can trust it, so never 
 - Win32 calls go through CsWin32 (`NativeMethods.txt`), not hand-written `DllImport`. The generated code is typed and NativeAOT-safe.
 - NativeAOT must stay free of warnings: no reflection-based serialization. Use source generators.
 - The keyboard hook runs on a thread of its own, and its callback only compares and copies. Every key on the system waits for it, and Windows quietly removes a hook that answers too slowly.
+- Velopack's package ID stays `hazeliscoding.Staypaw`, never `Staypaw`. Setup empties `%LOCALAPPDATA%\<packId>` on every install, and `%LOCALAPPDATA%\Staypaw` holds the log. Don't add Velopack's NuGet package either, because it brings in network code: `Main` answers Velopack's `--veloapp-*` hooks itself.
 
 ## Brand
 
@@ -58,6 +59,7 @@ One meaning per term. Use these words in code, docs and commits.
 - `tests/Staypaw.Tests/bin/Release/net10.0-windows/Staypaw.Tests.exe -explicit only` runs the explicit tests, which steal focus on the real desktop, and one types an unused key (0x97) into its own test windows. Run them only when the owner isn't typing.
 - `tools/Staypaw.StealTest` takes focus the way misbehaving apps do: `Staypaw.StealTest.exe <delaySeconds> [alt|attach|both] [repeatMs]`. It also steals whenever its thread gets `WM_APP`, and it prints how many keys reached it.
 - `dotnet publish src/Staypaw.Desktop -c Release -r win-x64` builds the native exe. With Visual Studio 18, put `%ProgramFiles(x86)%\Microsoft Visual Studio\Installer` on `PATH` first: its `VsDevCmd.bat` calls `vswhere.exe` without a path, and the error text breaks the NativeAOT link step ("'vswhere.exe' is not recognized").
+- `.github/workflows/release.yml` builds Setup and the portable zip with `dotnet vpk` (a local tool: `dotnet tool restore`). A `v*` tag makes a draft release; a run by hand builds the files alone.
 - `dotnet run scripts/make-icons.cs` regenerates `docs/brand/staypaw.ico` and `app-icon-256.png` from `app-icon.svg`.
 - `uv run --no-project --with fonttools --with uharfbuzz python -I scripts/make_lockup.py <Fredoka-SemiBold.ttf> docs/brand` rebuilds the lockups. Its header says where to get the font.
 

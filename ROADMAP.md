@@ -58,6 +58,8 @@ What the design must protect. Everything else gets ordinary good design.
 - **A restore calls `SetForegroundWindow` alone, without NoFocusSteal's `BringWindowToTop`.** Its extra activation could leave no window in front: in a steal test that typed without pause, about 40 of 1,000 keys reached no window, and each steal logged two `Restored` rows and counted twice toward the fight limit. `SetForegroundWindow` raises the window anyway. This gives up NoFocusSteal's exact restore.
 - **A restore that leaves no window in front is finished from your window's thread.** After a steal, `SetForegroundWindow` can return true and still leave no window in front, for good: your keys go nowhere and the stealer can't even steal again. A plain retry never fixed it. While it lasts, for up to 500 ms, the 15 ms check retries with Staypaw's thread sharing the input of your window's thread (`AttachThreadInput`), which finished 17 of 17 such restores. It's the one time Staypaw shares a game's input state: for about a millisecond, with no process handle, no memory read and no input sent. A hung window is skipped, since it would hang Staypaw too. This gives up keeping Staypaw's input apart from a protected game's at all times.
 - **Keys already in your window when a stealer takes focus can't be held.** A stealer that joins your window's input with `AttachThreadInput` and then takes focus gets the keys your window hasn't read yet, or they're lost when it lets go. The hook let them through rightly, because your window had focus: tagged keys put each one 0–3 ms before the steal. So the key test goes quiet for 30 ms before each steal it asks for, and checks the keys typed after it. This gives up keys typed in the last milliseconds before a steal, and a test of them.
+- **Setup is Velopack's, without its SDK.** The SDK brings in network code, so Staypaw answers Velopack's hooks itself: it exits at once when Setup or the uninstaller runs it with `--veloapp-install` or the like, which they'd otherwise wait 30 s for and then call a failed install. Setup, and the `Update.exe` that uninstalls Staypaw, still carry Velopack's code for downloading missing runtimes. Staypaw needs none, so they download nothing, and Staypaw never runs them. Releases have no update packages or feed. This gives up Velopack's updates, and an install with no network code anywhere; the portable zip has none.
+- **Velopack's package ID is `hazeliscoding.Staypaw`,** so Setup installs to `%LOCALAPPDATA%\hazeliscoding.Staypaw`. Setup empties that folder on every install and the uninstaller deletes it, and `%LOCALAPPDATA%\Staypaw` holds the log, so an ID of `Staypaw` would wipe the log at every upgrade. The ID matches winget's and the mutex's. The log and the settings stay after an uninstall. This gives up an install folder named plainly Staypaw.
 
 ## M0: Placeholder (as soon as possible)
 
@@ -114,7 +116,7 @@ What the design must protect. Everything else gets ordinary good design.
 
 - [ ] A Velopack per-user Setup and a portable zip, built by a release workflow.
 - [ ] Sign releases with Artifact Signing through OIDC, from a `release` environment that only `v*` tags can deploy to, as in Gil Sweep.
-- [ ] Submit a winget manifest.
+- [ ] Submit a winget manifest. A silent Setup installs without starting Staypaw, and winget runs installers silently.
 - [ ] A screenshot and a short demo in the README.
 
 **Done when:** `winget install hazeliscoding.Staypaw` installs a signed build that starts in the tray.
