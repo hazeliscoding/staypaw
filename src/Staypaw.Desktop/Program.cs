@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Oopsling;
 using Velopack;
 
 namespace Staypaw.Desktop;
@@ -22,7 +23,14 @@ internal static class Program
 
         // Two copies would fight over every restore, so a second launch just exits.
         using var mutex = new Mutex(true, @"Local\hazeliscoding.Staypaw", out var first);
-        return first ? BuildAvaloniaApp().StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown) : 0;
+        if (!first)
+        {
+            return 0;
+        }
+
+        // Writes a masked report to disk when a crash ends Staypaw. It sends nothing: the user files it themselves.
+        CrashReports.Start("Staypaw", "hazeliscoding/staypaw");
+        return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
     }
 
     public static AppBuilder BuildAvaloniaApp() =>
