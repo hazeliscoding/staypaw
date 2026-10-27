@@ -40,6 +40,14 @@ public class GuardrailTests
         Assert.Empty(References(Desktop, "System.Net"));
     }
 
+    // Oopsling only writes crash reports to disk. The user files one themselves, from their own browser.
+    [Fact]
+    public void Oopsling_uses_no_network()
+    {
+        Assert.Empty(References(Assembly.Load("Oopsling"), "System.Net"));
+        Assert.Empty(References(Assembly.Load("Oopsling.Avalonia"), "System.Net"));
+    }
+
     // The watcher, which sees your keys, never even links the code that talks to GitHub.
     [Fact]
     public void Core_does_not_reference_Velopack() => Assert.Empty(References(Core, "Velopack"));
