@@ -111,8 +111,9 @@ Stop Staypaw for a while without quitting it. As with every milestone from here,
   - **Which key.** One games leave alone. Alt with a number is an FFXIV hotbar, which is why only Alt+Tab, Alt+Esc and the Win key count as switch keys (2026-10-21).
   - **What a pause stops:** restores only, or held keys too, and how the tray shows that Staypaw is paused.
   - **A timed pause:** how long, and whether it outlasts a restart. Settings are files in `%APPDATA%\Staypaw`.
+- [ ] Release 1.2.0: the version bump goes through a pull request, and the merged commit is tagged. It's the first release with Oopsling in it, which Oopsling's 1.0 milestone waits for.
 
-**Done when:** a hotkey pauses and resumes Staypaw, a timed pause ends by itself, and the tray shows when it's paused.
+**Done when:** a hotkey pauses and resumes Staypaw, a timed pause ends by itself, the tray shows when it's paused, and 1.2.0 is released.
 
 ## M7: 1.3, agents
 
