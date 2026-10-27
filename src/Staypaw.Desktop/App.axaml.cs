@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Oopsling.Avalonia;
 using Staypaw.Core;
 
 namespace Staypaw.Desktop;
@@ -47,6 +48,9 @@ public partial class App : Application
                 StartWithWindows.Set(true);
                 ShowAbout();
             }
+
+            // Staypaw has no main window, so the last crash's report shows on its own.
+            CrashReportWindow.ShowUnshown();
         }
 
         base.OnFrameworkInitializationCompleted();
