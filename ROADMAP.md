@@ -1,6 +1,6 @@
 # Roadmap
 
-Staypaw is a Windows tray app that stops other apps from taking your keyboard focus. This file holds the decisions already made, what shipped and what's out of scope. Open work is in GitHub issues; **Next** says where.
+Staypaw is a Windows tray app that stops other apps from taking your keyboard focus. This file holds the decisions already made, what shipped, the milestones still to build, and what's out of scope.
 
 ## Architecture characteristics
 
@@ -70,7 +70,7 @@ What the design must protect. Everything else gets ordinary good design.
 - **Later versions reach winget through Komac,** from a workflow that runs when a stable release is published, as in Prompuff. Staypaw never updates itself, so winget is how its users get new versions. 1.0.0 went in by hand, since Komac only updates a package winget already has. This gives up a narrow token: Komac needs a classic one with `public_repo`, which can write to all the owner's public repos. *From 1.1, Staypaw also updates itself; winget still serves new installs, 1.0 and copies with updates off.*
 - **Staypaw updates itself, as Sweepling does,** the owner's call, reopening "no in-app updater". Velopack checks GitHub Releases a minute after start and every 4 hours, downloads in the background and restarts into the update. "Update automatically" in the tray menu turns it off. Only a copy installed with Setup checks: the portable zip and a build from source never do. The check is the only network call. Staypaw's own code still references no networking assembly, and `Staypaw.Core`, which sees your keys, doesn't reference Velopack; tests fail on either. This gives up "nothing goes over the network", the trust contract's plainest promise, and puts Velopack's HTTP code in the process that holds the keyboard hook. It also costs footprint: the exe grew from 17.9 to 24.0 MB, and an installed copy that has checked GitHub idles at 51.0 MB working set and 68.4 MB private with 20 threads, against 42.1 MB, 64.8 MB and 13 for 1.0. *Corrected for 1.1.1: the first figures for private memory and threads didn't hold up when measured again.*
 - **A restart into an update waits while the protected app is in front,** because nothing guards it for the seconds a restart takes. The update installs at the first focus change away from it, or at the next start. This gives up updating at once during a long game.
-- **Open work moves to GitHub issues and milestones,** the owner's choice, as sdl3-porter did after 1.0. With two releases out, open work is easier to find, follow and comment on as issues, and the [Staypaw board](https://github.com/users/hazeliscoding/projects/12) shows all of it. M5's last item became the v1.1.1 milestone (#2). A Getting found milestone, added on the way, holds the winget install with M4's open "Done when" (#3) and a SmartScreen check (#4). Later became #5 to #12, labelled `later`. The old checklists are in `git show v1.1.0:ROADMAP.md`. This gives up changing the plan in the same pull request as the code, and agents now read it through `gh`.
+- **Open work moves to GitHub issues and milestones,** the owner's choice, as sdl3-porter did after 1.0. With two releases out, open work is easier to find, follow and comment on as issues, and the [Staypaw board](https://github.com/users/hazeliscoding/projects/12) shows all of it. M5's last item became the v1.1.1 milestone (#2). A Getting found milestone, added on the way, holds the winget install with M4's open "Done when" (#3) and a SmartScreen check (#4). Later became #5 to #12, labelled `later`. The old checklists are in `git show v1.1.0:ROADMAP.md`. This gives up changing the plan in the same pull request as the code, and agents now read it through `gh`. *Superseded 2026-10-27: open work is back in this file (below).*
 - **`main` takes changes only by pull request,** the owner's call, as in Gil Sweep and Prompuff. A ruleset with no bypass refuses direct pushes, force-pushes and deleting `main`, requires CI's `build` check on a branch that's up to date with it, and merges by rebase only, so every commit on `main` has built and tested. This gives up pushing straight to `main`, which every change before this one did.
 - **The 1.x releases go smallest first,** the owner's call: v1.2 pause (#6), v1.3 rules by launcher (#7), v1.4 a window that appears without taking your keyboard (#5). Each release ships something soon, and the hardest design jobs get the most time. The software renderer (#12) joins v1.1.1, so the first release an installed copy fetches by itself carries a real change. Each milestone's open questions are settled as a dated decision before it's built. The elevated mode (#8) stays `later` until the log shows how often admin apps steal, and Calla's art (#9, #10, #11) stays `later` until it's drawn. This gives up the most-reacted ask in PowerToys #65 first: it comes last.
 - **Staypaw draws in software, as Sweepling does,** with Avalonia's `Win32RenderingMode.Software`. The default renderer holds about 60 MB more private memory from the moment Staypaw starts, before anything is drawn, and its first drawing adds about 21 MB more of working set; it gives neither back. Each run launched the native build fresh on the same machine, measured as on 2026-10-23. Neither build was installed, so neither checked for updates:
@@ -88,6 +88,10 @@ What the design must protect. Everything else gets ordinary good design.
 
 - **Crashes are reported through [Oopsling](https://github.com/hazeliscoding/oopsling), which sends nothing.** When a crash ends Staypaw, Oopsling writes a masked report beside the log, in `%LOCALAPPDATA%\Staypaw\crashes`. At the next launch a window shows it, and Report on GitHub opens a filled-in issue in your browser, where you file it or don't. Staypaw had no way to hear about a crash on someone else's PC, and the crash reporters that exist send reports themselves. A test fails if Oopsling ever references networking code. This gives up about 1 MB of the exe, and every crash nobody files.
 
+## Decisions (2026-10-27)
+
+- **Open work is back in this file,** the owner's call, reopening the move to GitHub issues (2026-10-25). Each milestone below has a box per item and a "Done when", and ideas with no milestone are under Later. The issues folded in, #3 to #11, are closed as not planned, each with a comment pointing here, and the milestones and the [Staypaw board](https://github.com/users/hazeliscoding/projects/12) are closed, not deleted. Bug reports, crash reports filed through Oopsling among them, and tasks for contributors stay GitHub issues. This gives up a public board contributors could follow, and a place to comment on each item.
+
 ## Shipped
 
 | Version | Released | What it brought |
@@ -96,18 +100,60 @@ What the design must protect. Everything else gets ordinary good design.
 | [1.1.0](https://github.com/hazeliscoding/staypaw/releases/tag/v1.1.0) | 2026-10-25 | Updates itself from GitHub Releases, never while the protected app is in front. |
 | [1.1.1](https://github.com/hazeliscoding/staypaw/releases/tag/v1.1.1) | 2026-10-25 | Draws in software, holding 10 MB of private memory instead of 68 MB, and is the first release 1.1 fetched by itself. |
 
-## Next
+## M6: 1.2, pause
 
-The [Staypaw board](https://github.com/users/hazeliscoding/projects/12) shows all open work. The current milestone is [v1.2](https://github.com/hazeliscoding/staypaw/milestone/3).
+Stop Staypaw for a while without quitting it. As with every milestone from here, its open questions are settled as a dated decision before it's built (2026-10-25), and that decision turns the item into a checklist of its own.
 
-| Milestone | What it brings |
-|---|---|
-| [v1.2](https://github.com/hazeliscoding/staypaw/milestone/3) | Pause: stop Staypaw for a while without quitting it, from a hotkey or for a set time. |
-| [v1.3](https://github.com/hazeliscoding/staypaw/milestone/4) | Agents: windows that coding agents and Playwright servers start never take your keyboard. |
-| [v1.4](https://github.com/hazeliscoding/staypaw/milestone/5) | Show, don't take: a window can appear without taking your keyboard. |
-| [Getting found](https://github.com/hazeliscoding/staypaw/milestone/2) | Staypaw where people look for it, starting with winget. It needs no release. |
+- [x] Crashes are reported through Oopsling, which sends nothing (2026-10-26).
+- [x] Staypaw takes Oopsling 1.0.0.
+- [ ] A pause hotkey and a timed pause. The decision settles:
+  - **How the hotkey is read.** The keyboard hook's callback only compares and copies, because every key on the system waits for it, and Staypaw never records which key was pressed. A registered hotkey keeps both rules.
+  - **Which key.** One games leave alone. Alt with a number is an FFXIV hotbar, which is why only Alt+Tab, Alt+Esc and the Win key count as switch keys (2026-10-21).
+  - **What a pause stops:** restores only, or held keys too, and how the tray shows that Staypaw is paused.
+  - **A timed pause:** how long, and whether it outlasts a restart. Settings are files in `%APPDATA%\Staypaw`.
 
-Ideas with no milestone yet are labelled [`later`](https://github.com/hazeliscoding/staypaw/issues?q=is%3Aopen+label%3Alater).
+**Done when:** a hotkey pauses and resumes Staypaw, a timed pause ends by itself, and the tray shows when it's paused.
+
+## M7: 1.3, agents
+
+Windows that coding agents and Playwright servers start never take your keyboard.
+
+- [ ] Rules by launcher. Today's tools can only match by exe name, so an agent's Chromium and your own Chrome look the same. The decision settles:
+  - **Finding the launcher.** Staypaw names a window's app with `PROCESS_QUERY_LIMITED_INFORMATION` and nothing more. Walking up to the process that started it has to stay within that, and cope with a parent that has already exited.
+  - **Which launchers:** Claude Code, Codex and Playwright servers, matched by what, and who keeps that list current.
+  - **What "never" means.** Today an idle steal from an unprotected app is only logged (2026-10-21). Restoring these even while you're idle is a new rule.
+  - **Where the rules live.** Staypaw has one protected app and no rule list (2026-10-21).
+
+**Done when:** a window from a listed launcher is put back even while you're idle, and your own browser still isn't.
+
+## M8: 1.4, show, don't take
+
+A window can appear without taking your keyboard, the most-reacted ask in PowerToys #65.
+
+- [ ] Show a window that would have stolen focus, without giving it the keyboard. The decision settles:
+  - **Keeping it in sight.** A restore calls `SetForegroundWindow` alone, which raises your window over the new one (2026-10-24). Showing it means putting it back on top without activating it, and proving with a live test that no key reaches it.
+  - **Which windows get it:** every steal, or only some. Staypaw has one protected app and no rule list (2026-10-21), so a choice per app needs a place to live.
+  - **Games.** A window shown over a fullscreen protected game can still break exclusive fullscreen, and compatibility with those games comes second to speed, trust and footprint (2026-10-21).
+
+**Done when:** a window that would have stolen focus stays in sight, and a live test proves no key reached it.
+
+## Getting found
+
+Staypaw where people look for it. These need no release, and each lands whenever it's ready, alongside the milestones above.
+
+- [ ] Install with `winget install hazeliscoding.Staypaw`. 1.0.0's manifest is in [microsoft/winget-pkgs#461348](https://github.com/microsoft/winget-pkgs/pull/461348), waiting for a moderator. Komac only updates a package winget already has, so `winget.yml` can send later releases only after it merges (2026-10-25). Once it does, the README's Install section gives the winget command, and the Alternatives table no longer says "not on winget yet".
+- [ ] Check whether a fresh download still gets SmartScreen's warning, on a machine that hasn't run Staypaw. Signed releases earn that reputation over time. The README says what the check found, or drops the warning once it's gone.
+
+**Done when:** `winget install hazeliscoding.Staypaw` installs a signed build that starts in the tray from Start, and at every sign-in after.
+
+## Later
+
+An idea gets a milestone once what it has to settle is a dated decision here.
+
+- An elevated mode that can protect admin apps. Staypaw runs unelevated (2026-10-21), so this needs a decision of its own. An elevated keyboard hook sees keys typed into admin windows too, so the never-record rule and held keys have to hold there. The Run key starts Staypaw unelevated (2026-10-24), so an elevated copy needs another way in, without a UAC prompt at every sign-in, and Velopack would have to restart it after an update (2026-10-25). It waits until the log, which already notes "couldn't take focus back from an administrator app", shows how often admin apps steal.
+- Calla's stay-put sticker beside "Before and after", once its see-through gaps are filled in anime-pipeline, never by hand here: her stickers come from one written spec and one reference image, and a sticker changed by hand drifts from the set. The gaps show as dark slivers on GitHub's dark mode (2026-10-23), so the filled one is checked on a dark background first. It would sit beside the table, next to the slow-blink and that-one stickers.
+- Calla's keys-held and on-guard stickers and her night-watch outfit, drawn in anime-pipeline from her spec and reference image. On-guard would be the README hero, though the README now opens with the demo GIF, so where it goes is open. Like her other AI-drawn art, they're Apache-2.0 and the README says how they were drawn (2026-10-23), and each is checked for see-through gaps on a dark background.
+- Hand-drawn Calla art by [@wrenishacking](https://github.com/wrenishacking), on the way. Agree its license with the artist before it goes in: the AI-drawn stickers are Apache-2.0 (2026-10-23), so other terms are stated in the README and beside the files. Whether it replaces the AI stickers or joins them is open, since it's a second source beside the spec and reference image. The README's License line, which says it's on the way, changes when it lands.
 
 ## Not planned
 
