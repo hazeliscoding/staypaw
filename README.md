@@ -72,7 +72,7 @@ Right-click the paw in your tray. From there you can:
 Staypaw watches your keyboard, so it has to be easy to trust.
 
 - **Nothing injected.** Staypaw never loads code into another app, and never touches a game's process. Its keyboard hook is the low-level kind, which runs inside Staypaw itself.
-- **No telemetry.** The only network call is the update check, which asks GitHub Releases for a newer version and sends nothing else. The tray menu turns it off. The code that sees your keys can't reach the network: a test fails if it references the updater or any networking code.
+- **No telemetry.** The only network call is the update check, which asks GitHub Releases for a newer version and sends nothing else. The tray menu turns it off. If Staypaw crashes, it shows you its crash report at the next launch, and the report reaches GitHub only if you file it yourself. The code that sees your keys can't reach the network: a test fails if it references the updater or any networking code.
 - **No keys stored.** It keeps the time of each keypress, never the key. Keys held during a steal stay in memory for a moment, then go to your window or are dropped. They never go to a game. Nothing about them is written to disk.
 - **Open source,** so you can check all of this instead of trusting it.
 

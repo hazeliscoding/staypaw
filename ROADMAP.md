@@ -84,6 +84,10 @@ What the design must protect. Everything else gets ordinary good design.
 
   Opening the menu took 0.08 s of CPU against 0.12 s. The welcome and the menu match the default renderer's within 8 of 255 in any colour channel, which is antialiasing. The exe grew by 4 KB, from 23,991,296 to 23,995,392 bytes. This gives up the GPU: a window that animated or filled the screen would cost CPU instead, and Staypaw has neither.
 
+## Decisions (2026-10-26)
+
+- **Crashes are reported through [Oopsling](https://github.com/hazeliscoding/oopsling), which sends nothing.** When a crash ends Staypaw, Oopsling writes a masked report beside the log, in `%LOCALAPPDATA%\Staypaw\crashes`. At the next launch a window shows it, and Report on GitHub opens a filled-in issue in your browser, where you file it or don't. Staypaw had no way to hear about a crash on someone else's PC, and the crash reporters that exist send reports themselves. A test fails if Oopsling ever references networking code. This gives up about 1 MB of the exe, and every crash nobody files.
+
 ## Shipped
 
 | Version | Released | What it brought |
@@ -110,7 +114,7 @@ Ideas with no milestone yet are labelled [`later`](https://github.com/hazeliscod
 - **DLL injection or hooking other apps' APIs.** It breaks the trust contract, work laptops ban it, and anti-cheat flags it.
 - **Anything that touches a game's process.** Game terms of service.
 - **Reading controller input.** Protecting an app covers idle and controller play without it.
-- **Network code beyond the update check:** telemetry or crash reporting.
+- **Network code beyond the update check:** telemetry, or crash reports that Staypaw sends itself.
 
 ## How we'll know it works
 
