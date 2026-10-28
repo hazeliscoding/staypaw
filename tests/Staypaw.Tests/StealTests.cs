@@ -135,13 +135,47 @@ public class StealTests
         Assert.True(foregroundKept, "the protected window should have focus again after the steal");
     }
 
-    private static string[] RunSteal(bool protectForeground, out bool foregroundKept)
+    [Fact(Explicit = true)]
+    public void A_steal_from_the_protected_app_stands_while_paused_and_the_log_says_so()
+    {
+        var rows = RunSteal(protectForeground: true, out var foregroundKept, paused: true);
+
+        Assert.True(rows.Any(row => row.Contains("(not restored: Staypaw is paused)", StringComparison.Ordinal)), string.Join('\n', rows));
+        Assert.False(foregroundKept, "a paused Staypaw should have let the steal stand");
+    }
+
+    // Presses Ctrl+Shift+Alt+P on the real desktop. Registered, the hotkey keeps P from reaching any window.
+    [Fact(Explicit = true)]
+    public unsafe void The_pause_hotkey_reaches_the_watcher()
+    {
+        using var watcher = new FocusWatcher(new FocusLog(Path.Combine(Path.GetTempPath(), $"staypaw-hotkey-{Guid.NewGuid():N}.csv")));
+        var pressed = 0;
+        watcher.PauseHotkeyPressed += (_, _) => pressed++;
+
+        VIRTUAL_KEY[] keys = [VIRTUAL_KEY.VK_CONTROL, VIRTUAL_KEY.VK_MENU, VIRTUAL_KEY.VK_SHIFT, VIRTUAL_KEY.VK_P];
+        var inputs = new INPUT[keys.Length * 2];
+        for (var i = 0; i < keys.Length; i++)
+        {
+            inputs[i].type = inputs[^(i + 1)].type = INPUT_TYPE.INPUT_KEYBOARD;
+            inputs[i].Anonymous.ki.wVk = inputs[^(i + 1)].Anonymous.ki.wVk = keys[i];
+            inputs[^(i + 1)].Anonymous.ki.dwFlags = KEYBD_EVENT_FLAGS.KEYEVENTF_KEYUP;
+        }
+
+        Assert.Equal((uint)inputs.Length, PInvoke.SendInput(inputs, sizeof(INPUT)));
+        Assert.True(WaitFor(() => pressed > 0, pump: true, 2000), "no WM_HOTKEY came; does another app hold Ctrl+Shift+Alt+P?");
+    }
+
+    private static string[] RunSteal(bool protectForeground, out bool foregroundKept, bool paused = false)
     {
         var log = Path.Combine(Path.GetTempPath(), $"staypaw-steal-{Guid.NewGuid():N}.csv");
         var foreground = PInvoke.GetForegroundWindow();
         using var watcher = new FocusWatcher(new FocusLog(log));
         watcher.Start();
         watcher.ProtectedApp = protectForeground ? watcher.CurrentApp : null;
+        if (paused)
+        {
+            watcher.Pause(TimeSpan.FromMinutes(1));
+        }
         using var thief = Process.Start(new ProcessStartInfo(StealTestExe, "11 attach") { UseShellExecute = false, CreateNoWindow = true })!;
         try
         {

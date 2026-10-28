@@ -40,6 +40,7 @@ PostThreadMessage
 QueryFullProcessImageName
 RAWINPUT
 RegisterClassEx
+RegisterHotKey
 RegisterRawInputDevices
 RI_KEY_BREAK
 RID_DEVICE_INFO_TYPE
@@ -53,7 +54,9 @@ TOKEN_ELEVATION
 UnhookWindowsHookEx
 UnhookWinEvent
 UnregisterClass
+UnregisterHotKey
 WindowFromPoint
 WINEVENT_OUTOFCONTEXT
+WM_HOTKEY
 WM_INPUT
 WM_QUIT
