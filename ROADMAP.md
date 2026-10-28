@@ -107,11 +107,11 @@ Stop Staypaw for a while without quitting it. As with every milestone from here,
 
 - [x] Crashes are reported through Oopsling, which sends nothing (2026-10-26).
 - [x] Staypaw takes Oopsling 1.0.0.
-- [ ] A pause hotkey and a timed pause (2026-10-27):
-  - [ ] Ctrl+Shift+Alt+P pauses and resumes, through `RegisterHotKey`.
-  - [ ] A pause stops restores and held keys, and the log says which steals it let through.
-  - [ ] The tray shows a grey paw, and the menu and tooltip say when the pause ends.
-  - [ ] Every pause ends by itself after 15 minutes, and nothing about it is saved.
+- [x] A pause hotkey and a timed pause (2026-10-27):
+  - [x] Ctrl+Shift+Alt+P pauses and resumes, through `RegisterHotKey`.
+  - [x] A pause stops restores and held keys, and the log says which steals it let through.
+  - [x] The tray shows a grey paw, and the menu and tooltip say when the pause ends.
+  - [x] Every pause ends by itself after 15 minutes, and nothing about it is saved.
 - [ ] Release 1.2.0: the version bump goes through a pull request, and the merged commit is tagged. It's the first release with Oopsling in it, which Oopsling's 1.0 milestone waits for.
 
 **Done when:** a hotkey pauses and resumes Staypaw, a timed pause ends by itself, the tray shows when it's paused, and 1.2.0 is released.
