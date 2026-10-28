@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Styling;
 using Staypaw.Desktop;
 
@@ -25,7 +26,7 @@ public class TrayMenuTests
     [Fact]
     public Task Exe_names_keep_their_underscores() => Ui.Session.Dispatch(() =>
     {
-        var menu = ((App)Application.Current!).BuildMenu("ffxiv_dx11.exe", null, null, null, startWithWindows: false, updateAutomatically: null);
+        var menu = ((App)Application.Current!).BuildMenu("ffxiv_dx11.exe", null, null, null, startWithWindows: false, updateAutomatically: null, pausedUntil: null);
 
         Assert.Equal("Protecting ffxiv__dx11.exe", ((NativeMenuItem)menu.Items[0]).Header);
     }, TestContext.Current.CancellationToken);
@@ -36,11 +37,27 @@ public class TrayMenuTests
     {
         var app = (App)Application.Current!;
 
-        Assert.DoesNotContain("Update automatically", Headers(app.BuildMenu(null, null, null, null, startWithWindows: true, updateAutomatically: null)));
-        var off = app.BuildMenu(null, null, null, null, startWithWindows: true, updateAutomatically: false).Items
+        Assert.DoesNotContain("Update automatically", Headers(app.BuildMenu(null, null, null, null, startWithWindows: true, updateAutomatically: null, pausedUntil: null)));
+        var off = app.BuildMenu(null, null, null, null, startWithWindows: true, updateAutomatically: false, pausedUntil: null).Items
             .OfType<NativeMenuItem>().Single(item => item.Header == "Update automatically");
         Assert.Equal(MenuItemToggleType.CheckBox, off.ToggleType);
         Assert.False(off.IsChecked);
+    }, TestContext.Current.CancellationToken);
+
+    // A pause has to be seen and undone from the menu, and the menu teaches the hotkey.
+    [Fact]
+    public Task A_pause_shows_when_it_ends_and_offers_resume() => Ui.Session.Dispatch(() =>
+    {
+        var app = (App)Application.Current!;
+
+        var running = app.BuildMenu(null, null, null, null, startWithWindows: true, updateAutomatically: null, pausedUntil: null);
+        var pause = running.Items.OfType<NativeMenuItem>().Single(item => item.Header == "Pause for 15 minutes");
+        Assert.Equal(new KeyGesture(Key.P, KeyModifiers.Control | KeyModifiers.Alt | KeyModifiers.Shift), pause.Gesture);
+        Assert.DoesNotContain("Resume", Headers(running));
+
+        var paused = Headers(app.BuildMenu(null, null, null, null, startWithWindows: true, updateAutomatically: null, pausedUntil: new DateTime(2026, 10, 27, 15, 40, 0)));
+        Assert.Equal(["Paused until 15:40", "Resume"], paused[..2]);
+        Assert.DoesNotContain("Pause for 15 minutes", paused);
     }, TestContext.Current.CancellationToken);
 
     private static string?[] Headers(NativeMenu menu) => [.. menu.Items.OfType<NativeMenuItem>().Select(item => item.Header)];

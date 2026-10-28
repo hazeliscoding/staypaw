@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <AvaloniaResource Include="..\..\docs\brand\staypaw.ico" Link="Assets\staypaw.ico" />
+    <AvaloniaResource Include="..\..\docs\brand\staypaw-paused.ico" Link="Assets\staypaw-paused.ico" />
     <AvaloniaResource Include="..\..\docs\brand\calla\slow-blink-256.png" Link="Assets\slow-blink-256.png" />
   </ItemGroup>
 

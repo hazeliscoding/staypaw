@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
+using Avalonia.Threading;
 using Staypaw.Desktop;
 
 // Renders the welcome window and the tray menu from made-up state, in light and dark, for the README. Made-up
@@ -31,7 +32,7 @@ session.Dispatch(() =>
         Save(welcome, border, Path.Combine(output.FullName, $"welcome-{name}.png"));
         welcome.Close();
 
-        var menu = ((App)Application.Current).BuildMenu("ffxiv_dx11.exe", "ffxiv_dx11.exe", "setup.exe", ("chrome.exe", 12), startWithWindows: true, updateAutomatically: true);
+        var menu = ((App)Application.Current).BuildMenu("ffxiv_dx11.exe", "ffxiv_dx11.exe", "setup.exe", ("chrome.exe", 12), startWithWindows: true, updateAutomatically: true, pausedUntil: null);
         var tray = new Window
         {
             SizeToContent = SizeToContent.WidthAndHeight,
@@ -44,7 +45,10 @@ session.Dispatch(() =>
             },
         };
         tray.Show();
-        // Show lays the window out at its default size; sizing it to the menu takes another pass.
+        // Show lays the window out at its default size; sizing it to the menu takes another pass, and widening it for
+        // the hotkey's column a third, once the dispatcher has run.
+        tray.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
         tray.UpdateLayout();
         Save(tray, null, Path.Combine(output.FullName, $"tray-{name}.png"));
         tray.Close();
@@ -53,7 +57,7 @@ session.Dispatch(() =>
 
 // As Avalonia's Windows tray turns a NativeMenu into the controls of its popup.
 static Control ToControl(NativeMenuItemBase item) => item is NativeMenuItem native
-    ? new MenuItem { Header = native.Header, IsEnabled = native.IsEnabled, ToggleType = native.ToggleType, IsChecked = native.IsChecked }
+    ? new MenuItem { Header = native.Header, IsEnabled = native.IsEnabled, ToggleType = native.ToggleType, IsChecked = native.IsChecked, InputGesture = native.Gesture }
     : new Separator();
 
 // At twice the pixels, for sharp text on high-DPI screens. A window gets rounded corners and a hairline border,
