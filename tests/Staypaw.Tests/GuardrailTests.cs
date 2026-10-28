@@ -40,7 +40,7 @@ public class GuardrailTests
         Assert.Empty(References(Desktop, "System.Net"));
     }
 
-    // Oopsling only writes crash reports to disk. The user files one themselves, from their own browser.
+    // Oopsling only writes crash reports to disk. The user sends one themselves, from their own browser or mail app.
     [Fact]
     public void Oopsling_uses_no_network()
     {

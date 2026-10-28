@@ -28,8 +28,9 @@ internal static class Program
             return 0;
         }
 
-        // Writes a masked report to disk when a crash ends Staypaw. It sends nothing: the user files it themselves.
-        CrashReports.Start("Staypaw", "hazeliscoding/staypaw");
+        // Writes a masked report to disk when a crash ends Staypaw. It sends nothing: the user files it on GitHub, or
+        // mails it to the contact, themselves.
+        CrashReports.Start("Staypaw", "hazeliscoding/staypaw", contact: "staypaw.crashes.happier582@passinbox.com");
         return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
     }
 
