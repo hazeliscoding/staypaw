@@ -2,7 +2,10 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform;
+using Avalonia.Threading;
 using Oopsling.Avalonia;
 using Staypaw.Core;
 
@@ -21,9 +24,15 @@ public partial class App : Application
     // Updates are on unless this file exists.
     private static readonly string UpdatesOffFile = Path.Combine(DataFolder, "updates-off");
 
+    // Every pause ends by itself, so a forgotten one can't leave you unprotected all day. It's never saved, so a
+    // restart comes back protected.
+    private static readonly TimeSpan PauseLength = TimeSpan.FromMinutes(15);
+
     private FocusWatcher? _watcher;
     private IClassicDesktopStyleApplicationLifetime? _desktop;
     private AboutWindow? _about;
+    private DateTime _pauseEnds;
+    private IDisposable? _pauseTimer;
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -36,6 +45,7 @@ public partial class App : Application
             _watcher = FocusWatcher.CreateDefault();
             _watcher.ProtectedApp = LoadProtectedApp();
             _watcher.Changed += (_, _) => UpdateTray();
+            _watcher.PauseHotkeyPressed += (_, _) => SetPaused(!_watcher.Paused);
             _watcher.Start();
             UpdateTray();
             if (Updates.IsInstalled)
@@ -60,17 +70,27 @@ public partial class App : Application
     {
         var watcher = _watcher!;
         var icon = TrayIcon.GetIcons(this)![0];
+        DateTime? pausedUntil = watcher.Paused ? _pauseEnds : null;
         icon.Menu = BuildMenu(watcher.ProtectedApp, watcher.CurrentApp, watcher.LastStealer, watcher.TopStealer, StartWithWindows.IsOn(),
-            Updates.IsInstalled ? UpdateAutomatically() : null);
-        icon.ToolTipText = watcher.ProtectedApp is null ? "Staypaw" : $"Staypaw: protecting {watcher.ProtectedApp}";
+            Updates.IsInstalled ? UpdateAutomatically() : null, pausedUntil);
+        icon.ToolTipText = pausedUntil is { } until ? $"Staypaw: paused until {until:HH:mm}"
+            : watcher.ProtectedApp is null ? "Staypaw" : $"Staypaw: protecting {watcher.ProtectedApp}";
     }
 
     // Takes the watcher's state as arguments, so the screenshot tool builds this same menu from made-up state.
-    // updateAutomatically is null for a copy that can't update itself.
+    // updateAutomatically is null for a copy that can't update itself, and pausedUntil is null unless paused.
     public NativeMenu BuildMenu(string? protectedApp, string? current, string? lastStealer, (string App, int Steals)? topStealer, bool startWithWindows,
-        bool? updateAutomatically)
+        bool? updateAutomatically, DateTime? pausedUntil)
     {
         var menu = new NativeMenu();
+
+        var hotkey = new KeyGesture(Key.P, KeyModifiers.Control | KeyModifiers.Alt | KeyModifiers.Shift);
+        if (pausedUntil is { } until)
+        {
+            menu.Items.Add(Label($"Paused until {until:HH:mm}"));
+            menu.Items.Add(Item("Resume", () => SetPaused(false), hotkey));
+            menu.Items.Add(new NativeMenuItemSeparator());
+        }
 
         menu.Items.Add(Label(protectedApp is null ? "No app protected" : $"Protecting {protectedApp}"));
         if (current is not null && !current.Equals(protectedApp, StringComparison.OrdinalIgnoreCase))
@@ -81,6 +101,11 @@ public partial class App : Application
         if (protectedApp is not null)
         {
             menu.Items.Add(Item("Stop protecting", () => Protect(null)));
+        }
+
+        if (pausedUntil is null)
+        {
+            menu.Items.Add(Item("Pause for 15 minutes", () => SetPaused(true), hotkey));
         }
 
         menu.Items.Add(new NativeMenuItemSeparator());
@@ -123,6 +148,20 @@ public partial class App : Application
         {
             // Protection still applies until Staypaw quits; it just won't be remembered.
             Trace.WriteLine("Staypaw: couldn't save the protected app: " + ex.Message);
+        }
+
+        UpdateTray();
+    }
+
+    private void SetPaused(bool paused)
+    {
+        _pauseTimer?.Dispose();
+        _pauseTimer = paused ? DispatcherTimer.RunOnce(() => SetPaused(false), PauseLength) : null;
+        _pauseEnds = DateTime.Now + PauseLength;
+        _watcher!.Pause(paused ? PauseLength : TimeSpan.Zero);
+        using (var ico = AssetLoader.Open(new Uri(paused ? "avares://Staypaw/Assets/staypaw-paused.ico" : "avares://Staypaw/Assets/staypaw.ico")))
+        {
+            TrayIcon.GetIcons(this)![0].Icon = new WindowIcon(ico);
         }
 
         UpdateTray();
@@ -236,9 +275,9 @@ public partial class App : Application
 
     private static NativeMenuItem Label(string text) => new(Literal(text)) { IsEnabled = false };
 
-    private static NativeMenuItem Item(string text, Action action)
+    private static NativeMenuItem Item(string text, Action action, KeyGesture? gesture = null)
     {
-        var item = new NativeMenuItem(Literal(text));
+        var item = new NativeMenuItem(Literal(text)) { Gesture = gesture };
         item.Click += (_, _) => action();
         return item;
     }
