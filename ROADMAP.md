@@ -92,6 +92,7 @@ What the design must protect. Everything else gets ordinary good design.
 
 - **Open work is back in this file,** the owner's call, reopening the move to GitHub issues (2026-10-25). Each milestone below has a box per item and a "Done when", and ideas with no milestone are under Later. The issues folded in, #3 to #11, are closed as not planned, each with a comment pointing here, and the milestones and the [Staypaw board](https://github.com/users/hazeliscoding/projects/12) are closed, not deleted. Bug reports, crash reports filed through Oopsling among them, and tasks for contributors stay GitHub issues. This gives up a public board contributors could follow, and a place to comment on each item.
 - **A pause stops Staypaw for 15 minutes, from Ctrl+Shift+Alt+P or the tray menu,** the owner's call. The hotkey is registered with `RegisterHotKey` on the window Staypaw already has for Raw Input, so the keyboard hook still only compares and copies, and no key is recorded. No game binds three modifiers, and the Win key is left out: gaming keyboards turn it off in game mode, and Staypaw counts it as a switch key. A pause stops restores and held keys, and the log keeps every row, saying which steals it let through. The tray shows a grey paw, and the menu and tooltip say when the pause ends. Every pause ends by itself, and the hotkey or Resume ends it sooner, so a forgotten pause can't leave you unprotected all day. Nothing is saved, so a restart or an update comes back protected. This gives up typing Ö with AltGr+Shift+P on US-International, which the hotkey takes, a pause of any other length, and a pause that outlasts a restart.
+- **Crash reports can also be emailed, for players without a GitHub account,** through Oopsling 1.1, to an address the owner picked, `staypaw.crashes.happier582@passinbox.com`. The crash window shows it under its buttons. Clicking it copies the report and opens an empty draft in your mail app, where you paste the report and send it yourself, so Staypaw still sends nothing. This gives up having every report in public, where anyone can read it and add to it, and the address in the app will draw spam.
 
 ## Shipped
 
@@ -107,6 +108,7 @@ Stop Staypaw for a while without quitting it. As with every milestone from here,
 
 - [x] Crashes are reported through Oopsling, which sends nothing (2026-10-26).
 - [x] Staypaw takes Oopsling 1.0.0.
+- [x] Staypaw takes Oopsling 1.1.0, with an email address for crash reports (2026-10-27). Oopsling's M5 waits for it.
 - [x] A pause hotkey and a timed pause (2026-10-27):
   - [x] Ctrl+Shift+Alt+P pauses and resumes, through `RegisterHotKey`.
   - [x] A pause stops restores and held keys, and the log says which steals it let through.
