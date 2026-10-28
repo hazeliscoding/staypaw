@@ -55,12 +55,13 @@ From reports in [PowerToys #65](https://github.com/microsoft/PowerToys/issues/65
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/tray-dark.png">
-  <img align="right" width="259" src="docs/screenshots/tray-light.png" alt="Staypaw's tray menu: protecting ffxiv_dx11.exe, last stealer setup.exe, top stealer chrome.exe with 12 steals, Start with Windows and Update automatically ticked, and items to open the focus log, see About and quit.">
+  <img align="right" width="359" src="docs/screenshots/tray-light.png" alt="Staypaw's tray menu: protecting ffxiv_dx11.exe, Pause for 15 minutes with its hotkey Ctrl+Shift+Alt+P, last stealer setup.exe, top stealer chrome.exe with 12 steals, Start with Windows and Update automatically ticked, and items to open the focus log, see About and quit.">
 </picture>
 
 Right-click the paw in your tray. From there you can:
 
 - protect the app you were just in;
+- pause Staypaw for 15 minutes, as Ctrl+Shift+Alt+P does from anywhere, even in a game, and the paw stays grey until the pause ends or you resume;
 - see which app took focus last, and which takes it most;
 - turn Start with Windows and automatic updates off or on;
 - open the focus log, which lists every focus change and what Staypaw did about it.
