@@ -91,6 +91,7 @@ What the design must protect. Everything else gets ordinary good design.
 ## Decisions (2026-10-27)
 
 - **Open work is back in this file,** the owner's call, reopening the move to GitHub issues (2026-10-25). Each milestone below has a box per item and a "Done when", and ideas with no milestone are under Later. The issues folded in, #3 to #11, are closed as not planned, each with a comment pointing here, and the milestones and the [Staypaw board](https://github.com/users/hazeliscoding/projects/12) are closed, not deleted. Bug reports, crash reports filed through Oopsling among them, and tasks for contributors stay GitHub issues. This gives up a public board contributors could follow, and a place to comment on each item.
+- **A pause stops Staypaw for 15 minutes, from Ctrl+Shift+Alt+P or the tray menu,** the owner's call. The hotkey is registered with `RegisterHotKey` on the window Staypaw already has for Raw Input, so the keyboard hook still only compares and copies, and no key is recorded. No game binds three modifiers, and the Win key is left out: gaming keyboards turn it off in game mode, and Staypaw counts it as a switch key. A pause stops restores and held keys, and the log keeps every row, saying which steals it let through. The tray shows a grey paw, and the menu and tooltip say when the pause ends. Every pause ends by itself, and the hotkey or Resume ends it sooner, so a forgotten pause can't leave you unprotected all day. Nothing is saved, so a restart or an update comes back protected. This gives up typing Ö with AltGr+Shift+P on US-International, which the hotkey takes, a pause of any other length, and a pause that outlasts a restart.
 
 ## Shipped
 
@@ -106,11 +107,11 @@ Stop Staypaw for a while without quitting it. As with every milestone from here,
 
 - [x] Crashes are reported through Oopsling, which sends nothing (2026-10-26).
 - [x] Staypaw takes Oopsling 1.0.0.
-- [ ] A pause hotkey and a timed pause. The decision settles:
-  - **How the hotkey is read.** The keyboard hook's callback only compares and copies, because every key on the system waits for it, and Staypaw never records which key was pressed. A registered hotkey keeps both rules.
-  - **Which key.** One games leave alone. Alt with a number is an FFXIV hotbar, which is why only Alt+Tab, Alt+Esc and the Win key count as switch keys (2026-10-21).
-  - **What a pause stops:** restores only, or held keys too, and how the tray shows that Staypaw is paused.
-  - **A timed pause:** how long, and whether it outlasts a restart. Settings are files in `%APPDATA%\Staypaw`.
+- [ ] A pause hotkey and a timed pause (2026-10-27):
+  - [ ] Ctrl+Shift+Alt+P pauses and resumes, through `RegisterHotKey`.
+  - [ ] A pause stops restores and held keys, and the log says which steals it let through.
+  - [ ] The tray shows a grey paw, and the menu and tooltip say when the pause ends.
+  - [ ] Every pause ends by itself after 15 minutes, and nothing about it is saved.
 - [ ] Release 1.2.0: the version bump goes through a pull request, and the merged commit is tagged. It's the first release with Oopsling in it, which Oopsling's 1.0 milestone waits for.
 
 **Done when:** a hotkey pauses and resumes Staypaw, a timed pause ends by itself, the tray shows when it's paused, and 1.2.0 is released.
