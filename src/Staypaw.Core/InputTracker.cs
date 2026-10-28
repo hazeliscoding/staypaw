@@ -1,6 +1,7 @@
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.Input;
+using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Staypaw.Core;
@@ -17,6 +18,7 @@ internal sealed class InputTracker : IDisposable
 {
     private const int HistorySize = 16;
     private const string WindowClass = "Staypaw.Input";
+    private const int PauseHotkeyId = 1;
 
     private static readonly WNDPROC WndProcDelegate = WndProc;
     private static readonly Dictionary<nint, InputTracker> Trackers = [];
@@ -62,7 +64,15 @@ internal sealed class InputTracker : IDisposable
             new() { usUsagePage = 1, usUsage = 6, dwFlags = RAWINPUTDEVICE_FLAGS.RIDEV_INPUTSINK, hwndTarget = _hwnd },
         ];
         Registered = PInvoke.RegisterRawInputDevices(devices, (uint)sizeof(RAWINPUTDEVICE));
+
+        // Ctrl+Shift+Alt+P, registered so the keyboard hook never has to watch for it. If another app holds it
+        // already, the tray menu still pauses.
+        PInvoke.RegisterHotKey(_hwnd, PauseHotkeyId,
+            HOT_KEY_MODIFIERS.MOD_CONTROL | HOT_KEY_MODIFIERS.MOD_ALT | HOT_KEY_MODIFIERS.MOD_SHIFT | HOT_KEY_MODIFIERS.MOD_NOREPEAT, 'P');
     }
+
+    /// <summary>Raised on this tracker's thread when you press the pause hotkey.</summary>
+    public event Action? PauseHotkey;
 
     public bool Registered { get; }
 
@@ -95,6 +105,7 @@ internal sealed class InputTracker : IDisposable
 
     public void Dispose()
     {
+        PInvoke.UnregisterHotKey(_hwnd, PauseHotkeyId);
         Trackers.Remove(_hwnd);
         PInvoke.DestroyWindow(_hwnd);
     }
@@ -112,6 +123,10 @@ internal sealed class InputTracker : IDisposable
                 // A malformed input packet must never take the app down.
                 System.Diagnostics.Trace.WriteLine("Staypaw: raw input failed: " + ex);
             }
+        }
+        else if (msg == PInvoke.WM_HOTKEY && Trackers.TryGetValue(hwnd, out var pauser))
+        {
+            pauser.PauseHotkey?.Invoke();
         }
 
         return PInvoke.DefWindowProc(hwnd, msg, wParam, lParam);

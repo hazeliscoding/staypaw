@@ -70,6 +70,9 @@ public sealed class FocusWatcher : IDisposable
     private int? _lastBogusLogged;
     private int _bogusSinceLogged;
 
+    // An Environment.TickCount64 deadline, read by the keyboard hook's thread too.
+    private long _pauseEnds;
+
     internal FocusWatcher(FocusLog log)
     {
         _log = log;
@@ -82,10 +85,17 @@ public sealed class FocusWatcher : IDisposable
         };
         _onFocus = (_, _, _, _, _, _, _) => CheckForeground();
         _onPoll = (_, _, _, _) => CheckForeground();
+        _input.PauseHotkey += () => PauseHotkeyPressed?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>Raised after each logged focus change that wasn't to Staypaw's own window.</summary>
     public event EventHandler? Changed;
+
+    /// <summary>Raised on the watcher's thread when you press Ctrl+Shift+Alt+P.</summary>
+    public event EventHandler? PauseHotkeyPressed;
+
+    /// <summary>While paused, Staypaw restores nothing and holds no keys, and still logs every change.</summary>
+    public bool Paused => Environment.TickCount64 < Volatile.Read(ref _pauseEnds);
 
     public static string LogPath => FocusLog.DefaultPath;
 
@@ -139,6 +149,15 @@ public sealed class FocusWatcher : IDisposable
         _focusHook = PInvoke.SetWinEventHook(PInvoke.EVENT_OBJECT_FOCUS, PInvoke.EVENT_OBJECT_FOCUS,
             HMODULE.Null, _onFocus, 0, 0, PInvoke.WINEVENT_OUTOFCONTEXT);
         _pollTimer = PInvoke.SetTimer(HWND.Null, 0, 15, _onPoll);
+    }
+
+    /// <summary>Pauses for <paramref name="length"/>, after which the pause ends by itself; zero resumes.</summary>
+    public void Pause(TimeSpan length)
+    {
+        Volatile.Write(ref _pauseEnds, Environment.TickCount64 + (long)length.TotalMilliseconds);
+
+        // A pause lets key-ups through, so a key-down still held would be replayed after its key-up and stick.
+        _held.Drop();
     }
 
     public void Dispose()
@@ -280,9 +299,18 @@ public sealed class FocusWatcher : IDisposable
         var key = BehaviorKey(next);
         var repeatStealer = _lastStole.TryGetValue(key, out var stole) && Classifier.Elapsed(eventTime, stole) <= Classifier.RepeatStealerMs;
         var note = next.Visible ? "" : "(invisible window)";
-        var restored = previous is not null
-                       && Classifier.ShouldRestore(classification, change, IsProtected(previous), repeatStealer)
-                       && Restore(previous, next, eventTime, ref note);
+        var restored = false;
+        if (previous is not null && Classifier.ShouldRestore(classification, change, IsProtected(previous), repeatStealer))
+        {
+            if (Paused)
+            {
+                note = Join(note, "(not restored: Staypaw is paused)");
+            }
+            else
+            {
+                restored = Restore(previous, next, eventTime, ref note);
+            }
+        }
 
         if (previous is not null && (restored || PInvoke.GetForegroundWindow() == previous.Hwnd))
         {
@@ -469,7 +497,7 @@ public sealed class FocusWatcher : IDisposable
         nint foreground = PInvoke.GetForegroundWindow();
         if (e.dwExtraInfo is not (ReplayTag or LastReplayTag))
         {
-            return _held.Offer(key, foreground, _judged, unchecked((int)e.time));
+            return !Paused && _held.Offer(key, foreground, _judged, unchecked((int)e.time));
         }
 
         var again = _held.OnReplayed(key, e.dwExtraInfo == LastReplayTag, foreground, _judged, unchecked((int)e.time), out var next);
