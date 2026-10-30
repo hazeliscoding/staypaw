@@ -1,12 +1,18 @@
 name: winget
 
 # Runs when a stable release is published (prereleases don't fire "released"): Komac adds the version to winget-pkgs
-# through a pull request from the owner's fork. Staypaw never updates itself, so this is how winget users get new
-# versions. The first version, 1.0.0, went in by hand (winget-pkgs #461348), since Komac can only update a package
-# winget already has. WINGET_TOKEN is a classic token with public_repo; until it exists, this does nothing.
+# through a pull request from the owner's fork, so `winget install` gets the newest version. The first version, 1.0.0,
+# went in by hand (winget-pkgs #461348), since Komac can only update a package winget already has. Releases published
+# before that merges fail here; a run by hand with the newest tag catches winget up. WINGET_TOKEN is a classic token
+# with public_repo; until it exists, this does nothing.
 on:
   release:
     types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The published release's tag, such as v1.2.1
+        required: true
 
 permissions:
   contents: read
@@ -22,7 +28,7 @@ jobs:
       - name: Submit the release
         env:
           GITHUB_TOKEN: ${{ secrets.WINGET_TOKEN }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: |
           if [ -z "$GITHUB_TOKEN" ]; then
             echo "::notice::WINGET_TOKEN isn't set, so nothing went to winget."
