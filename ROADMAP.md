@@ -95,6 +95,13 @@ What the design must protect. Everything else gets ordinary good design.
 - **Crash reports can also be emailed, for players without a GitHub account,** through Oopsling 1.1, to an address the owner picked, `staypaw.crashes.happier582@passinbox.com`. The crash window shows it under its buttons. Clicking it copies the report and opens an empty draft in your mail app, where you paste the report and send it yourself, so Staypaw still sends nothing. This gives up having every report in public, where anyone can read it and add to it, and the address in the app will draw spam.
 - **1.2.0 is never released, and 1.2.1 is the first 1.2,** the owner's call. v1.2.0 was tagged before Staypaw took Oopsling 1.1, and its run stopped at signing while the Azure bill was unpaid. Tags can't be moved, so the release with the pause and the email address is 1.2.1. The v1.2.0 tag stays, with no release. This gives up a release for every tag, and a 1.2 that starts at 1.2.0.
 
+## Decisions (2026-10-30)
+
+- **An agent window is one started by Claude Code or Codex, or a Playwright browser.** Staypaw walks up from the window's process to the processes that started it, and the first `claude.exe` or `codex.exe` it meets makes the window an agent's. Any exe under `%LOCALAPPDATA%\ms-playwright` counts on its own path, whoever started it. The log from 2026-10-21 to 10-29 shows why: an agent's Chrome stole 22 times, once from FFXIV, and it runs the installed `chrome.exe`, as a Chrome you open yourself does. `node.exe` isn't a launcher, though most MCP servers run on it, because anything a Node script opens would count, like the browser `npm run dev` starts. This gives up Claude Code installed through npm, which runs as `node.exe`, and agents not on the list. Claude's desktop app is also `claude.exe`, so windows it starts count too.
+- **The launcher is found without opening any process more than today.** A Toolhelp snapshot gives every process's parent and exe name without a handle. Windows reuses the IDs of exited processes, so a parent counts only if it started before its child, checked with `GetProcessTimes` under `PROCESS_QUERY_LIMITED_INFORMATION`. The walk stops at a launcher, at a parent that has exited, or after 10 levels. No command line is read: it lives in the other process's memory and can hold tokens. The answer is kept per process, so each app is walked once. A test fails if any `OpenProcess` asks for more than `PROCESS_QUERY_LIMITED_INFORMATION`. This gives up a window whose launcher has already exited, like a browser left open after the agent quit.
+- **An agent window's steal is restored even while you're idle, and it gets no launch grace.** An app that starts after your last key and takes focus within 10 s counts as one you launched (2026-10-21), and an agent's browser starts that way right after you send a prompt. Your switch to an agent window still counts, so you can click into its browser to log in, and an Unclear change still goes through unless it's a repeat stealer. The log's Reason names the launcher. This gives up a window you asked an agent to open: it comes up behind, and you click it.
+- **The launchers are a fixed list in `Staypaw.Core`,** kept current by the owner and by pull requests from anyone. Staypaw updates itself (2026-10-25), so a new name reaches installed copies within 4 hours of a release. There's no settings file or tray menu for it. This gives up adding a launcher of your own. M8 needs a place for choices per app too, so a rule list waits for it.
+
 ## Shipped
 
 | Version | Released | What it brought |
@@ -123,11 +130,14 @@ Stop Staypaw for a while without quitting it. As with every milestone from here,
 
 Windows that coding agents and Playwright servers start never take your keyboard.
 
-- [ ] Rules by launcher. Today's tools can only match by exe name, so an agent's Chromium and your own Chrome look the same. The decision settles:
-  - **Finding the launcher.** Staypaw names a window's app with `PROCESS_QUERY_LIMITED_INFORMATION` and nothing more. Walking up to the process that started it has to stay within that, and cope with a parent that has already exited.
-  - **Which launchers:** Claude Code, Codex and Playwright servers, matched by what, and who keeps that list current.
-  - **What "never" means.** Today an idle steal from an unprotected app is only logged (2026-10-21). Restoring these even while you're idle is a new rule.
-  - **Where the rules live.** Staypaw has one protected app and no rule list (2026-10-21).
+- [ ] Rules by launcher (2026-10-30):
+  - [ ] A window's launcher comes from a Toolhelp snapshot, each parent checked to have started before its child, and the answer is kept per process.
+  - [ ] `claude.exe`, `codex.exe` and any exe under `%LOCALAPPDATA%\ms-playwright` make an agent window. The names are checked against real installs of each.
+  - [ ] An agent window gets no launch grace, and its steal is restored even while you're idle. The log's Reason names the launcher.
+  - [ ] A test fails if any `OpenProcess` asks for more than `PROCESS_QUERY_LIMITED_INFORMATION`, and it catches a deliberate `PROCESS_VM_READ`.
+  - [ ] An explicit test: the steal test tool, started by a listed launcher, is put back while you're idle; started any other way, it's only logged.
+  - [ ] The README says which agents count, and the glossary gets "Agent window".
+- [ ] Release 1.3.0.
 
 **Done when:** a window from a listed launcher is put back even while you're idle, and your own browser still isn't.
 
