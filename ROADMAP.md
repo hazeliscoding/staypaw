@@ -146,7 +146,7 @@ A window can appear without taking your keyboard, the most-reacted ask in PowerT
 
 Staypaw where people look for it. These need no release, and each lands whenever it's ready, alongside the milestones above.
 
-- [ ] Install with `winget install hazeliscoding.Staypaw`. 1.0.0's manifest is in [microsoft/winget-pkgs#461348](https://github.com/microsoft/winget-pkgs/pull/461348), waiting for a moderator. Komac only updates a package winget already has, so `winget.yml` can send later releases only after it merges (2026-10-25). Once it does, the README's Install section gives the winget command, and the Alternatives table no longer says "not on winget yet".
+- [ ] Install with `winget install hazeliscoding.Staypaw`. 1.0.0's manifest is in [microsoft/winget-pkgs#461348](https://github.com/microsoft/winget-pkgs/pull/461348), waiting for a moderator. Komac only updates a package winget already has, so `winget.yml` can send later releases only after it merges (2026-10-25). Once it does, run `winget.yml` by hand with the newest release's tag, and the README's Install section gives the winget command, and the Alternatives table no longer says "not on winget yet".
 - [ ] Check whether a fresh download still gets SmartScreen's warning, on a machine that hasn't run Staypaw. Signed releases earn that reputation over time. The README says what the check found, or drops the warning once it's gone.
 
 **Done when:** `winget install hazeliscoding.Staypaw` installs a signed build that starts in the tray from Start, and at every sign-in after.
