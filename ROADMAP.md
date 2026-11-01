@@ -116,8 +116,8 @@ What the design must protect. Everything else gets ordinary good design.
 Windows that coding agents and Playwright servers start never take your keyboard.
 
 - [ ] Rules by launcher (2026-10-30):
-  - [ ] A window's launcher comes from a Toolhelp snapshot, each parent checked to have started before its child, and the answer is kept per process.
-  - [ ] `claude.exe`, `codex.exe` and any exe under `%LOCALAPPDATA%\ms-playwright` make an agent window. The names are checked against real installs of each.
+  - [x] A window's launcher comes from a Toolhelp snapshot, each parent checked to have started before its child, and the answer is kept per process.
+  - [x] `claude.exe`, `codex.exe` and any exe under `%LOCALAPPDATA%\ms-playwright` make an agent window. The names are checked against real installs of each.
   - [ ] An agent window gets no launch grace, and its steal is restored even while you're idle. The log's Reason names the launcher.
   - [ ] A test fails if any `OpenProcess` asks for more than `PROCESS_QUERY_LIMITED_INFORMATION`, and it catches a deliberate `PROCESS_VM_READ`.
   - [ ] An explicit test: the steal test tool, started by a listed launcher, is put back while you're idle; started any other way, it's only logged.

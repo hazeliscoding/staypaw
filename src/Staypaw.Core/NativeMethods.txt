@@ -1,6 +1,7 @@
 AttachThreadInput
 CallNextHookEx
 CloseHandle
+CreateToolhelp32Snapshot
 CreateWindowEx
 DefWindowProc
 DestroyWindow
@@ -37,6 +38,8 @@ OpenProcess
 OpenProcessToken
 PeekMessage
 PostThreadMessage
+Process32FirstW
+Process32NextW
 QueryFullProcessImageName
 RAWINPUT
 RegisterClassEx
