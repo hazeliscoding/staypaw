@@ -62,6 +62,9 @@ public sealed record FocusChange
 
     /// <summary>When the process that now has the foreground started, if known.</summary>
     public int? NextProcessStart { get; init; }
+
+    /// <summary>The coding agent that started the new window, such as claude.exe or Playwright, if any.</summary>
+    public string? NextAgent { get; init; }
 }
 
 /// <summary>
@@ -79,12 +82,13 @@ public static class Classifier
 
     /// <summary>
     /// Whether to put focus back. A steal is undone when it took focus from the protected app or from the window
-    /// you were typing in. An Unclear change, usually a link or file you opened, is undone only for a repeat stealer.
+    /// you were typing in, or when an agent's window took it. An Unclear change, usually a link or file you opened,
+    /// is undone only for a repeat stealer.
     /// </summary>
     public static bool ShouldRestore(Classification classification, FocusChange c, bool previousIsProtected, bool nextIsRepeatStealer) =>
         classification.Verdict switch
         {
-            Verdict.Steal => previousIsProtected || Within(c, c.LastTyping, TypingWindowMs),
+            Verdict.Steal => previousIsProtected || c.NextAgent is not null || Within(c, c.LastTyping, TypingWindowMs),
             Verdict.Unclear => nextIsRepeatStealer,
             _ => false,
         };
@@ -156,7 +160,8 @@ public static class Classifier
             return Yours("after input Staypaw couldn't see (touch, pen or an accessibility tool)");
         }
 
-        if (LaunchedAfter(c, c.LastAction))
+        // An agent's browser starts right after you send it a prompt, which looks just like an app you launched.
+        if (c.NextAgent is null && LaunchedAfter(c, c.LastAction))
         {
             return Yours("an app you just launched");
         }
@@ -166,9 +171,10 @@ public static class Classifier
             return new(Verdict.Unclear, "right after your click in the window you were in (it may have opened a link or file)");
         }
 
-        return Within(c, c.LastTyping, TypingWindowMs)
-            ? new(Verdict.Steal, "no click or switch asked for it, while you were typing")
-            : new(Verdict.Steal, "no click or switch asked for it");
+        var reason = Within(c, c.LastTyping, TypingWindowMs)
+            ? "no click or switch asked for it, while you were typing"
+            : "no click or switch asked for it";
+        return new(Verdict.Steal, c.NextAgent is null ? reason : $"{reason}, in a window {c.NextAgent} started");
     }
 
     /// <summary>Milliseconds from <paramref name="earlier"/> to <paramref name="later"/>, safe across tick-count wraparound.</summary>
