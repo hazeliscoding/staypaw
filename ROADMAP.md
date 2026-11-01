@@ -109,22 +109,7 @@ What the design must protect. Everything else gets ordinary good design.
 | [1.0.0](https://github.com/hazeliscoding/staypaw/releases/tag/v1.0.0) | 2026-10-25 | M0 to M4: a log of every steal, a protected app, held keys, a signed Setup and portable zip, and Start with Windows. |
 | [1.1.0](https://github.com/hazeliscoding/staypaw/releases/tag/v1.1.0) | 2026-10-25 | Updates itself from GitHub Releases, never while the protected app is in front. |
 | [1.1.1](https://github.com/hazeliscoding/staypaw/releases/tag/v1.1.1) | 2026-10-25 | Draws in software, holding 10 MB of private memory instead of 68 MB, and is the first release 1.1 fetched by itself. |
-
-## M6: 1.2, pause
-
-Stop Staypaw for a while without quitting it. As with every milestone from here, its open questions are settled as a dated decision before it's built (2026-10-25), and that decision turns the item into a checklist of its own.
-
-- [x] Crashes are reported through Oopsling, which sends nothing (2026-10-26).
-- [x] Staypaw takes Oopsling 1.0.0.
-- [x] Staypaw takes Oopsling 1.1.0, with an email address for crash reports (2026-10-27). Oopsling's M5 waits for it.
-- [x] A pause hotkey and a timed pause (2026-10-27):
-  - [x] Ctrl+Shift+Alt+P pauses and resumes, through `RegisterHotKey`.
-  - [x] A pause stops restores and held keys, and the log says which steals it let through.
-  - [x] The tray shows a grey paw, and the menu and tooltip say when the pause ends.
-  - [x] Every pause ends by itself after 15 minutes, and nothing about it is saved.
-- [ ] Release 1.2.1: the version bump goes through a pull request, and the merged commit is tagged. It's the first release with Oopsling in it, which Oopsling's 1.0 milestone waits for.
-
-**Done when:** a hotkey pauses and resumes Staypaw, a timed pause ends by itself, the tray shows when it's paused, and 1.2.1 is released.
+| [1.2.1](https://github.com/hazeliscoding/staypaw/releases/tag/v1.2.1) | 2026-11-01 | M6: pauses for 15 minutes from Ctrl+Shift+Alt+P or the tray, and shows crash reports through Oopsling, which sends nothing. There's no 1.2.0. |
 
 ## M7: 1.3, agents
 
