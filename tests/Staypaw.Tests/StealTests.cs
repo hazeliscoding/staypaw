@@ -26,6 +26,7 @@ public class StealTests
     [Fact(Explicit = true)]
     public unsafe void Keys_typed_during_steals_land_in_your_window_and_never_in_the_stealer()
     {
+        RequireNoAgent();
         var log = Path.Combine(Path.GetTempPath(), $"staypaw-keys-{Guid.NewGuid():N}.csv");
         using var watcher = new FocusWatcher(new FocusLog(log));
         watcher.Start();
@@ -119,11 +120,24 @@ public class StealTests
     }
 
     [Fact(Explicit = true)]
-    public void A_scripted_steal_shows_up_as_a_log_row()
+    public void An_idle_steal_from_a_window_no_agent_started_is_only_logged()
     {
-        var rows = RunSteal(protectForeground: false, out _);
+        var rows = RunSteal(protectForeground: false, out var foregroundKept);
 
         Assert.Contains(rows, row => row.Contains(",Steal,Staypaw.StealTest.exe,", StringComparison.Ordinal));
+        Assert.False(foregroundKept, "an idle steal from an app that isn't protected should stand");
+    }
+
+    [Fact(Explicit = true)]
+    public void An_idle_steal_from_a_window_an_agent_started_is_restored()
+    {
+        var rows = RunSteal(protectForeground: false, out var foregroundKept, viaAgent: true);
+
+        Assert.True(
+            rows.Any(row => row.Contains(",Restored,Staypaw.StealTest.exe,", StringComparison.Ordinal)
+                            && row.Contains("in a window claude.exe started", StringComparison.Ordinal)),
+            string.Join('\n', rows));
+        Assert.True(foregroundKept, "the window you were in should have focus again after the agent's steal");
     }
 
     [Fact(Explicit = true)]
@@ -165,8 +179,9 @@ public class StealTests
         Assert.True(WaitFor(() => pressed > 0, pump: true, 2000), "no WM_HOTKEY came; does another app hold Ctrl+Shift+Alt+P?");
     }
 
-    private static string[] RunSteal(bool protectForeground, out bool foregroundKept, bool paused = false)
+    private static string[] RunSteal(bool protectForeground, out bool foregroundKept, bool paused = false, bool viaAgent = false)
     {
+        RequireNoAgent();
         var log = Path.Combine(Path.GetTempPath(), $"staypaw-steal-{Guid.NewGuid():N}.csv");
         var foreground = PInvoke.GetForegroundWindow();
         using var watcher = new FocusWatcher(new FocusLog(log));
@@ -176,7 +191,8 @@ public class StealTests
         {
             watcher.Pause(TimeSpan.FromMinutes(1));
         }
-        using var thief = Process.Start(new ProcessStartInfo(StealTestExe, "11 attach") { UseShellExecute = false, CreateNoWindow = true })!;
+        var agent = viaAgent ? new FakeAgent($"\"{StealTestExe}\" 11 attach") : null;
+        using var thief = agent is null ? Process.Start(new ProcessStartInfo(StealTestExe, "11 attach") { UseShellExecute = false, CreateNoWindow = true })! : null;
         try
         {
             Pump(TimeSpan.FromSeconds(13));
@@ -184,13 +200,19 @@ public class StealTests
         }
         finally
         {
-            thief.Kill();
+            thief?.Kill();
+            agent?.Dispose();
         }
 
         var rows = File.ReadAllLines(log);
         File.Delete(log);
         return rows;
     }
+
+    // Under an agent, every steal-test window is an agent's, and Staypaw puts it back whatever the test expects.
+    private static void RequireNoAgent() =>
+        Assert.True(new Launchers().Find((uint)Environment.ProcessId) is null,
+            "An agent started this test run, so every steal-test window counts as an agent's. Run the explicit tests from a terminal no agent started.");
 
     private static int ForegroundPid()
     {
