@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Staypaw.Core;
 
 namespace Staypaw.Tests;
@@ -92,70 +91,33 @@ public class LauncherTests
     [Fact]
     public void A_launcher_is_found_among_real_processes()
     {
-        using var agent = FakeAgent.Start();
+        using var agent = new FakeAgent("ping -n 30 127.0.0.1");
+        var ping = agent.WaitForChild("PING");
 
-        Assert.Equal("claude.exe", new Launchers().Find((uint)agent.Child.Id));
+        Assert.Equal("claude.exe", new Launchers().Find((uint)ping.Id));
     }
 
     [Fact]
     public void The_answer_is_kept_after_the_launcher_exits()
     {
-        using var agent = FakeAgent.Start();
-        var launchers = new Launchers();
-        launchers.Find((uint)agent.Child.Id);
+        using var agent = new FakeAgent("ping -n 30 127.0.0.1");
+        var ping = agent.WaitForChild("PING");
+        try
+        {
+            var launchers = new Launchers();
+            launchers.Find((uint)ping.Id);
 
-        agent.Launcher.Kill();
-        agent.Launcher.WaitForExit();
+            agent.Launcher.Kill();
+            agent.Launcher.WaitForExit();
 
-        Assert.Equal("claude.exe", launchers.Find((uint)agent.Child.Id));
-        Assert.Null(new Launchers().Find((uint)agent.Child.Id));
+            Assert.Equal("claude.exe", launchers.Find((uint)ping.Id));
+            Assert.Null(new Launchers().Find((uint)ping.Id));
+        }
+        finally
+        {
+            ping.Kill();
+        }
     }
 
     private static string LocalAppData => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-
-    /// <summary>A copy of cmd.exe named claude.exe, running ping so it has a child that can outlive it.</summary>
-    private sealed class FakeAgent : IDisposable
-    {
-        private readonly DirectoryInfo _folder;
-
-        private FakeAgent(DirectoryInfo folder, Process launcher, Process child) => (_folder, Launcher, Child) = (folder, launcher, child);
-
-        public Process Launcher { get; }
-
-        public Process Child { get; }
-
-        public static FakeAgent Start()
-        {
-            var folder = Directory.CreateTempSubdirectory("staypaw-launcher-");
-            var claude = Path.Combine(folder.FullName, "claude.exe");
-            File.Copy(Path.Combine(Environment.SystemDirectory, "cmd.exe"), claude);
-            var launcher = Process.Start(new ProcessStartInfo(claude, "/c ping -n 30 127.0.0.1") { UseShellExecute = false, CreateNoWindow = true })!;
-            for (var i = 0; i < 50; i++)
-            {
-                if (Process.GetProcessesByName("PING").FirstOrDefault(p => p.StartTime >= launcher.StartTime) is { } child)
-                {
-                    return new FakeAgent(folder, launcher, child);
-                }
-
-                Thread.Sleep(100);
-            }
-
-            launcher.Kill();
-            throw new TimeoutException("The fake agent never started ping.");
-        }
-
-        public void Dispose()
-        {
-            foreach (var process in new[] { Child, Launcher })
-            {
-                if (!process.HasExited)
-                {
-                    process.Kill();
-                    process.WaitForExit();
-                }
-            }
-
-            _folder.Delete(recursive: true);
-        }
-    }
 }
