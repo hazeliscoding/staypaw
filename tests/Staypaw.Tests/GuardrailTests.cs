@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace Staypaw.Tests;
 
 /// <summary>Structural rules from AGENTS.md: the core has no UI and no updater, Staypaw's own code uses no network (the
-/// update check is Velopack's), and every hook stays in Staypaw's own process.</summary>
+/// update check is Velopack's), every hook stays in Staypaw's own process, and other processes are only asked who they are.</summary>
 public class GuardrailTests
 {
     private static readonly Assembly Core = Assembly.Load("Staypaw.Core");
@@ -14,13 +14,7 @@ public class GuardrailTests
     [Fact]
     public void Every_Windows_hook_is_low_level()
     {
-        var root = AppContext.BaseDirectory;
-        while (!File.Exists(Path.Combine(root, "AGENTS.md")))
-        {
-            root = Path.GetDirectoryName(root.TrimEnd(Path.DirectorySeparatorChar))!;
-        }
-
-        var hooks = HookTypes(Directory.EnumerateFiles(Path.Combine(root, "src"), "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
+        var hooks = HookTypes(Sources());
 
         Assert.NotEmpty(hooks);
         Assert.All(hooks, hook => Assert.EndsWith("_LL", hook, StringComparison.Ordinal));
@@ -29,6 +23,21 @@ public class GuardrailTests
     [Fact]
     public void The_check_finds_a_hook_that_loads_into_other_apps() =>
         Assert.Equal(["WH_KEYBOARD"], HookTypes(["PInvoke.SetWindowsHookEx(WINDOWS_HOOK_ID.WH_KEYBOARD, proc, module, 0);"]));
+
+    // A game's process may be one of them, and its anti-cheat watches for handles that can read or drive it.
+    [Fact]
+    public void Every_process_is_opened_only_to_ask_who_it_is()
+    {
+        var rights = OpenProcessRights(Sources());
+
+        Assert.NotEmpty(rights);
+        Assert.All(rights, access => Assert.Equal("PROCESS_QUERY_LIMITED_INFORMATION", access));
+    }
+
+    [Fact]
+    public void The_check_finds_a_process_opened_to_read_its_memory() =>
+        Assert.Equal(["PROCESS_QUERY_LIMITED_INFORMATION|PROCESS_VM_READ"],
+            OpenProcessRights(["PInvoke.OpenProcess_SafeHandle(PROCESS_ACCESS_RIGHTS.PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_ACCESS_RIGHTS.PROCESS_VM_READ, false, pid);"]));
 
     [Fact]
     public void Core_does_not_reference_Avalonia() => Assert.Empty(References(Core, "Avalonia"));
@@ -63,9 +72,27 @@ public class GuardrailTests
     public void The_check_finds_network_references() =>
         Assert.NotEmpty(References(Assembly.Load("System.Net.Http"), "System.Net"));
 
+    private static IEnumerable<string> Sources()
+    {
+        var root = AppContext.BaseDirectory;
+        while (!File.Exists(Path.Combine(root, "AGENTS.md")))
+        {
+            root = Path.GetDirectoryName(root.TrimEnd(Path.DirectorySeparatorChar))!;
+        }
+
+        // Build output holds CsWin32's generated declarations, which take any access as a parameter.
+        return Directory.EnumerateFiles(Path.Combine(root, "src"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Split(Path.DirectorySeparatorChar).Any(part => part is "obj" or "bin"))
+            .Select(File.ReadAllText);
+    }
+
     private static string[] HookTypes(IEnumerable<string> sources) =>
         [.. sources.SelectMany(source => Regex.Matches(source, @"SetWindowsHookEx\(\s*(?:WINDOWS_HOOK_ID\.)?(\w+)"))
             .Select(match => match.Groups[1].Value)];
+
+    private static string[] OpenProcessRights(IEnumerable<string> sources) =>
+        [.. sources.SelectMany(source => Regex.Matches(source, @"\bOpenProcess(?:_SafeHandle)?\(\s*([^,]+),"))
+            .Select(match => Regex.Replace(match.Groups[1].Value, @"PROCESS_ACCESS_RIGHTS\.|\s", ""))];
 
     private static string[] References(Assembly assembly, string prefix) =>
         [.. assembly.GetReferencedAssemblies()
