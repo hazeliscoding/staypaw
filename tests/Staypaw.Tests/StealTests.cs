@@ -54,9 +54,11 @@ public class StealTests
 
         try
         {
-            // Your window's own arrival is a steal that stands, unless you're really typing somewhere.
-            Assert.True(WaitFor(() => ForegroundPid() == yours.Id, pump: true, 10000),
-                "the steal-test window never kept focus; were you typing?");
+            // Your window's own arrival is a steal that stands, unless you're really typing somewhere. It's checked
+            // again once the watcher has judged it: undone, it would leave your real window to get the keys.
+            WaitFor(() => ForegroundPid() == yours.Id, pump: true, 10000);
+            Pump(TimeSpan.FromMilliseconds(500));
+            Assert.True(ForegroundPid() == yours.Id, "the steal-test window never kept focus; were you typing?");
 
             // The stealer's first steal must find you typing to be undone. No key is sent, so none can meet it.
             var until = Environment.TickCount64 + 15000;
