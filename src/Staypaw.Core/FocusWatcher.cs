@@ -42,6 +42,7 @@ public sealed class FocusWatcher : IDisposable
     private readonly FocusLog _log;
     private readonly InputTracker _input = new();
     private readonly KeyHolder _held = new();
+    private readonly Launchers _launchers = new();
     private readonly Queue<(WindowInfo Window, int EventTime, int LastInputInfo)> _pending = new();
     private readonly uint _ownPid = (uint)Environment.ProcessId;
     private readonly WINEVENTPROC _onForeground;
@@ -293,6 +294,7 @@ public sealed class FocusWatcher : IDisposable
                 _input.LastClickAtOrBefore(until, _ => true)),
             LastTyping = _input.LastTypingAtOrBefore(eventTime),
             NextProcessStart = next.ProcessStartTick,
+            NextAgent = _launchers.AgentOf(next.ProcessId, next.ExePath),
         };
 
         var classification = Classifier.Classify(change);

@@ -126,6 +126,28 @@ public class ClassifierTests
     public void A_repeat_stealer_is_restored_even_right_after_your_click() =>
         Assert.True(Restores(Baseline with { LastClickInPrevious = Now - 300 }, nextIsRepeatStealer: true));
 
+    // An agent's browser starts right after you send a prompt, which would otherwise look like an app you launched.
+    [Fact]
+    public void An_agent_window_gets_no_launch_grace() =>
+        Assert.Equal(Verdict.Steal, VerdictOf(Baseline with { LastAction = Now - 3000, NextProcessStart = Now - 2500, NextAgent = "claude.exe" }));
+
+    [Fact]
+    public void A_steal_by_an_agent_window_is_restored_even_while_you_are_idle() =>
+        Assert.True(Restores(Baseline with { NextAgent = "claude.exe" }));
+
+    [Fact]
+    public void A_steal_by_an_agent_window_names_the_launcher() =>
+        Assert.Contains("claude.exe", Classifier.Classify(Baseline with { NextAgent = "claude.exe" }).Reason, StringComparison.Ordinal);
+
+    // You click into an agent's browser to log in.
+    [Fact]
+    public void Your_switch_to_an_agent_window_is_never_restored() =>
+        Assert.False(Restores(Baseline with { LastClickOnNext = Now - 5, NextAgent = "claude.exe" }));
+
+    [Fact]
+    public void A_link_you_opened_in_an_agent_window_is_allowed() =>
+        Assert.False(Restores(Baseline with { LastClickInPrevious = Now - 300, NextAgent = "claude.exe" }));
+
     private static Verdict VerdictOf(FocusChange change) => Classifier.Classify(change).Verdict;
 
     private static bool Restores(FocusChange change, bool previousIsProtected = false, bool nextIsRepeatStealer = false) =>
