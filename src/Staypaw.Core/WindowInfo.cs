@@ -161,7 +161,8 @@ internal sealed class WindowInfo
         }
     }
 
-    private static unsafe int? StartTick(HANDLE process)
+    /// <summary>When the process started, as a FILETIME.</summary>
+    internal static unsafe long? CreationTime(HANDLE process)
     {
         System.Runtime.InteropServices.ComTypes.FILETIME creation, exit, kernel, user;
         if (!PInvoke.GetProcessTimes(process, &creation, &exit, &kernel, &user))
@@ -170,7 +171,17 @@ internal sealed class WindowInfo
         }
 
         var ticks = ((long)(uint)creation.dwHighDateTime << 32) | (uint)creation.dwLowDateTime;
+        return ticks > 0 ? ticks : null;
+    }
+
+    private static int? StartTick(HANDLE process)
+    {
+        if (CreationTime(process) is not { } ticks)
+        {
+            return null;
+        }
+
         var ageMs = (DateTime.UtcNow - DateTime.FromFileTimeUtc(ticks)).TotalMilliseconds;
-        return ticks > 0 && ageMs is >= 0 and < int.MaxValue / 2 ? unchecked(Environment.TickCount - (int)ageMs) : null;
+        return ageMs is >= 0 and < int.MaxValue / 2 ? unchecked(Environment.TickCount - (int)ageMs) : null;
     }
 }
