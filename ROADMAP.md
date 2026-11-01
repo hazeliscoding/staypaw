@@ -120,7 +120,7 @@ Windows that coding agents and Playwright servers start never take your keyboard
   - [x] `claude.exe`, `codex.exe` and any exe under `%LOCALAPPDATA%\ms-playwright` make an agent window. The names are checked against real installs of each.
   - [x] An agent window gets no launch grace, and its steal is restored even while you're idle. The log's Reason names the launcher.
   - [x] A test fails if any `OpenProcess` asks for more than `PROCESS_QUERY_LIMITED_INFORMATION`, and it catches a deliberate `PROCESS_VM_READ`.
-  - [ ] An explicit test: the steal test tool, started by a listed launcher, is put back while you're idle; started any other way, it's only logged.
+  - [x] An explicit test: the steal test tool, started by a listed launcher, is put back while you're idle; started any other way, it's only logged.
   - [ ] The README says which agents count, and the glossary gets "Agent window".
 - [ ] Release 1.3.0.
 
