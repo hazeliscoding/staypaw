@@ -53,6 +53,7 @@ One meaning per term. Use these words in code, docs and commits.
 - **Restore:** putting focus back on the window a steal took it from. The log's Result column says `Restored`.
 - **Repeat stealer:** an app (exe plus window class) that stole in the last 10 minutes.
 - **Held keys:** keys typed between a steal and its restore.
+- **Agent window:** a window whose app `claude.exe` or `codex.exe` started, up to 10 parents up, or whose exe is under `%LOCALAPPDATA%\ms-playwright`. Its steals are restored even while you're idle.
 
 ## Commands
 
