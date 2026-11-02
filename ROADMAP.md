@@ -110,21 +110,7 @@ What the design must protect. Everything else gets ordinary good design.
 | [1.1.0](https://github.com/hazeliscoding/staypaw/releases/tag/v1.1.0) | 2026-10-25 | Updates itself from GitHub Releases, never while the protected app is in front. |
 | [1.1.1](https://github.com/hazeliscoding/staypaw/releases/tag/v1.1.1) | 2026-10-25 | Draws in software, holding 10 MB of private memory instead of 68 MB, and is the first release 1.1 fetched by itself. |
 | [1.2.1](https://github.com/hazeliscoding/staypaw/releases/tag/v1.2.1) | 2026-11-01 | M6: pauses for 15 minutes from Ctrl+Shift+Alt+P or the tray, and shows crash reports through Oopsling, which sends nothing. There's no 1.2.0. |
-
-## M7: 1.3, agents
-
-Windows that coding agents and Playwright servers start never take your keyboard.
-
-- [x] Rules by launcher (2026-10-30):
-  - [x] A window's launcher comes from a Toolhelp snapshot, each parent checked to have started before its child, and the answer is kept per process.
-  - [x] `claude.exe`, `codex.exe` and any exe under `%LOCALAPPDATA%\ms-playwright` make an agent window. The names are checked against real installs of each.
-  - [x] An agent window gets no launch grace, and its steal is restored even while you're idle. The log's Reason names the launcher.
-  - [x] A test fails if any `OpenProcess` asks for more than `PROCESS_QUERY_LIMITED_INFORMATION`, and it catches a deliberate `PROCESS_VM_READ`.
-  - [x] An explicit test: the steal test tool, started by a listed launcher, is put back while you're idle; started any other way, it's only logged.
-  - [x] The README says which agents count, and the glossary gets "Agent window".
-- [ ] Release 1.3.0.
-
-**Done when:** a window from a listed launcher is put back even while you're idle, and your own browser still isn't.
+| [1.3.0](https://github.com/hazeliscoding/staypaw/releases/tag/v1.3.0) | 2026-11-01 | M7: a window that `claude.exe` or `codex.exe` started, or a browser Playwright installed, is put back even while you're idle, and your own browser still isn't. |
 
 ## M8: 1.4, show, don't take
 
