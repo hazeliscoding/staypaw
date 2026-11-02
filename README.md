@@ -32,8 +32,8 @@ SmartScreen may call it an unrecognized app until enough people have run it. Und
 |---|---|---|---|
 | typing in your editor | a chat popup | your next words go into the chat | focus comes straight back, and the keys you typed land in your editor |
 | typing a password | a background app's window | your password goes into that window, and you have to change it | focus comes straight back, and your password lands where you were typing |
-| coding while an agent tests in a browser | the browser opens a page, every few seconds | the browser keeps jumping in front, and your keys go into it | focus comes back while you type, or every time if your editor is protected |
-| crafting in a game, hands off the keyboard | an agent's browser opens a page | the game loses focus | the game keeps focus, because you protected it |
+| coding while an agent tests in a browser | the browser opens a page, every few seconds | the browser keeps jumping in front, and your keys go into it | focus comes straight back every time, because an agent started the browser |
+| crafting in a game, hands off the keyboard | an agent's browser opens a page | the game loses focus | the game keeps focus, because an agent started the browser |
 | playing a match | a work chat message | the game loses focus mid-match | focus goes back to the game, and keys pressed meanwhile are dropped, never replayed into it |
 | pressing Space | an installer with a Cancel button | the install is cancelled | the key never reaches the installer |
 
@@ -45,6 +45,7 @@ From reports in [PowerToys #65](https://github.com/microsoft/PowerToys/issues/65
 
 - **Protects an app you pick.** Nothing takes focus from it unless you click or Alt+Tab away, even while you're idle.
 - **Keeps focus where you're typing.**
+- **Keeps coding agents off your keyboard.** A window that `claude.exe` or `codex.exe` started (Claude Code, the Claude app or Codex), or a browser Playwright installed, never keeps focus it takes, even while you're idle. You can still click or Alt+Tab to it.
 - **Holds stray keys.** A key you press during a steal never reaches the app that stole focus. It goes to your window once focus is back, or is dropped if that window is a game.
 - **Tells you which app did it,** in a log you can open.
 - **Installs signed,** for you alone, without admin rights.
