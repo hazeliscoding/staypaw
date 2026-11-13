@@ -102,6 +102,10 @@ What the design must protect. Everything else gets ordinary good design.
 - **An agent window's steal is restored even while you're idle, and it gets no launch grace.** An app that starts after your last key and takes focus within 10 s counts as one you launched (2026-10-21), and an agent's browser starts that way right after you send a prompt. Your switch to an agent window still counts, so you can click into its browser to log in, and an Unclear change still goes through unless it's a repeat stealer. The log's Reason names the launcher. This gives up a window you asked an agent to open: it comes up behind, and you click it.
 - **The launchers are a fixed list in `Staypaw.Core`,** kept current by the owner and by pull requests from anyone. Staypaw updates itself (2026-10-25), so a new name reaches installed copies within 4 hours of a release. There's no settings file or tray menu for it. This gives up adding a launcher of your own. M8 needs a place for choices per app too, so a rule list waits for it.
 
+## Decisions (2026-11-12)
+
+- **A downloaded update waits while a crash report is open.** Oopsling counts a report as shown once its window opens, so a restart then would close it unfiled, and it's never shown again. Sweepling, Oopsling's second host, turned this up. Oopsling opens the window itself, so Staypaw learns about it through Avalonia's window events. This gives up nothing.
+
 ## Shipped
 
 | Version | Released | What it brought |
