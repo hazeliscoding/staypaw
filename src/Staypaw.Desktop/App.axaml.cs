@@ -189,6 +189,9 @@ public partial class App : Application
                 desktop.Shutdown();
             });
         watcher.Changed += (_, _) => gate.FocusChanged();
+        // Oopsling opens the crash report's window itself, so its window events say when one is open.
+        Window.WindowOpenedEvent.AddClassHandler<CrashReportWindow>((_, _) => gate.ReportOpened());
+        Window.WindowClosedEvent.AddClassHandler<CrashReportWindow>((_, _) => gate.ReportClosed());
         updates.Downloaded += gate.Downloaded;
         desktop.Exit += (_, _) => updates.Dispose();
         updates.Start();
