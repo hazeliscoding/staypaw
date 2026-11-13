@@ -32,6 +32,22 @@ public class UpdateGateTests
         Assert.Equal(1, restarts);
     }
 
+    // A crash report counts as shown once its window opens, so a restart then would close it unfiled for good.
+    [Fact]
+    public void Waits_while_a_crash_report_is_open()
+    {
+        var restarts = 0;
+        var gate = new UpdateGate(() => false, () => restarts++);
+        gate.ReportOpened();
+
+        gate.Downloaded();
+        gate.FocusChanged();
+        Assert.Equal(0, restarts);
+
+        gate.ReportClosed();
+        Assert.Equal(1, restarts);
+    }
+
     [Fact]
     public void Never_restarts_without_a_downloaded_update()
     {
